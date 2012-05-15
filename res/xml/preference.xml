@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="Interface">
+		<CheckBoxPreference
+			android:key="interface_launch_webactivity"
+			android:title="show homepage"
+			android:summaryOn="display the homepage when the app is launched"
+			android:summaryOff="do not display the homepage when the app is launched"
+			android:defaultValue="false" />
+	</PreferenceCategory>
+	<PreferenceCategory android:title="Boot Process">
+		<CheckBoxPreference
+			android:key="boot_initialize"
+			android:title="initialize BotBrew"
+			android:summaryOn="initialize BotBrew on boot"
+			android:summaryOff="do not initialize BotBrew on boot"
+			android:defaultValue="true"
+			android:disableDependentsState="false" />
+		<CheckBoxPreference
+			android:key="boot_supervisor"
+			android:title="start supervisor"
+			android:summaryOn="start supervisor on boot"
+			android:summaryOff="do not start supervisor on boot"
+			android:defaultValue="false"
+			android:dependency="boot_initialize" />
+	</PreferenceCategory>
+	<PreferenceCategory android:title="Package Management">
+		<EditTextPreference
+			android:key="apt::architectures"
+			android:title="APT::Architectures"
+			android:summary="supported architectures"
+			android:defaultValue="" />
+		<CheckBoxPreference
+			android:key="apt::ignore-hold"
+			android:title="APT::Ignore-Hold"
+			android:summaryOn="ignore package holds"
+			android:summaryOff="respect package holds"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::clean-installed"
+			android:title="APT::Clean-Installed"
+			android:summaryOn="autoclean affects installed packages"
+			android:summaryOff="autoclean spares installed packages"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::force-loopbreak"
+			android:title="APT::Force-LoopBreak"
+			android:summaryOn="allow temporarily removing essential packages"
+			android:summaryOff="do not allow temporarily removing essential packages"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::download-only"
+			android:title="APT::Get::Download-Only"
+			android:summaryOn="do not unpack or install after downloading"
+			android:summaryOff="unpack and install after downloading"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::fix-broken"
+			android:title="APT::Get::Fix-Broken"
+			android:summaryOn="try to fix a system with broken dependencies"
+			android:summaryOff="do not try to fix a system with broken dependencies"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::fix-missing"
+			android:title="APT::Get::Fix-Missing"
+			android:summaryOn="ignore missing packages"
+			android:summaryOff="do not ignore missing packages"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::download"
+			android:title="APT::Get::Download"
+			android:summaryOn="allow downloading of packages"
+			android:summaryOff="disallow downloading of packages"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::simulate"
+			android:title="APT::Get::Simulate"
+			android:summaryOn="simulate actions instead of changing the system state"
+			android:summaryOff="do not simulate actions"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::assume-yes"
+			android:title="APT::Get::Assume-Yes"
+			android:summaryOn="automatically answer `yes' to most prompts"
+			android:summaryOff="wait for interactive input"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::show-upgraded"
+			android:title="APT::Get::Show-Upgraded"
+			android:summaryOn="show packages that are to be upgraded"
+			android:summaryOff="do not show packages that are to be upgraded"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::show-upgraded"
+			android:title="APT::Get::Show-Upgraded"
+			android:summaryOn="show packages that are to be upgraded"
+			android:summaryOff="do not show packages that are to be upgraded"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::show-versions"
+			android:title="APT::Get::Show-Versions"
+			android:summaryOn="show full versions for upgraded and installed packages"
+			android:summaryOff="do not show full versions"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::upgrade"
+			android:title="APT::Get::Upgrade"
+			android:summaryOn="allow package upgrades"
+			android:summaryOff="disallow package upgrades"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::force-yes"
+			android:title="APT::Get::Force-Yes"
+			android:summaryOn="continue without prompting even in dangerous situations"
+			android:summaryOff="do not continue in potentially dangerous situations"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::print-uris"
+			android:title="APT::Get::APT::Get::Print-URIs"
+			android:summaryOn="print URI's instead of fetching files"
+			android:summaryOff="fetch files without printing URI's"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::reinstall"
+			android:title="APT::Get::APT::Get::ReInstall"
+			android:summaryOn="reinstall packages that are already at the latest version"
+			android:summaryOff="do not reinstall packages that are already installed"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::list-cleanup"
+			android:title="APT::Get::APT::Get::List-Cleanup"
+			android:summaryOn="automatically remove obsolete package lists"
+			android:summaryOff="do not automatically remove obsolete package lists"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::trivial-only"
+			android:title="APT::Get::APT::Get::Trivial-Only"
+			android:summaryOn="automatically answer `no' to most prompts"
+			android:summaryOff="wait for interactive input"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="apt::get::remove"
+			android:title="APT::Get::APT::Get::Remove"
+			android:summaryOn="allow package removal"
+			android:summaryOff="disallow package removal"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::purge"
+			android:title="APT::Get::APT::Get::Purge"
+			android:summaryOn="purge configuration after package removal"
+			android:summaryOff="keep configuration after package removal"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="apt::get::allowunauthenticated"
+			android:title="APT::Get::AllowUnauthenticated"
+			android:summaryOn="allow unauthenticated repositories"
+			android:summaryOff="disallow unauthenticated repositories"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="debian_hack"
+			android:title="Debian installation hack"
+			android:summaryOn="set DPkg::Options::='--ignore-depends=libgcc1'"
+			android:summaryOff="disable Debian installation hack"
+			android:defaultValue="true" />
+	</PreferenceCategory>
+</PreferenceScreen>

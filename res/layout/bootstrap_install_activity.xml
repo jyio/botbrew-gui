@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:text="Installing..." />
+	<jackpal.androidterm.emulatorview.EmulatorView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:id="@+id/emulator"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_weight="1" />
+	<TextView
+		android:id="@+id/fail"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:text="Whoops... I failed to deploy the package!"
+		android:visibility="gone" />
+	<Button
+		android:id="@+id/retry"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="Retry"
+		android:visibility="gone" />
+</LinearLayout>

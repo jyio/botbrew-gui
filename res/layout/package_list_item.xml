@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view class="com.botbrew.basil.CheckableDelegate$TwoLineListItem" xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:mode="twoLine"
+	android:descendantFocusability="blocksDescendants">
+	<LinearLayout
+		android:id="@+id/package_line1"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="4dip"
+		android:gravity="center_vertical">
+		<TextView
+			android:id="@+id/package_name"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:textAppearance="?android:attr/textAppearanceLarge" />
+		<TextView
+			android:id="@+id/package_version"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="12dip"
+			android:textAppearance="?android:attr/textAppearanceLarge" />
+		<TextView
+			android:id="@+id/package_status"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="12dip"
+			android:textAppearance="?android:attr/textAppearanceLarge" />
+	</LinearLayout>
+	<TextView
+		android:id="@+id/package_summary"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/package_line1"
+		android:layout_alignLeft="@+id/package_line1"
+		android:layout_marginBottom="4dip"
+		android:textAppearance="?android:attr/textAppearanceSmall" />
+</view>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="hello">Hello World, Main!</string>
+	<string name="app_name">BotBrew Basil</string>
+	<string name="app_shortname">BotBrew</string>
+	<string name="app_codename">basil</string>
+	<string name="app_name_bootstrap">Bootstrap</string>
+	<string name="filename_default">botbrew-basil</string>
+	<string name="filename_hint">name of BotBrew directory or image</string>
+	<string name="prompt_location">bootstrap location</string>
+	<string name="menu_control">Control</string>
+	<!-- search -->
+	<string name="search_label">BotBrew</string>
+	<string name="search_hint">Search for packages</string>
+	<string name="search_settings_description">BotBrew packages</string>
+	<string name="search_instructions">Press the search key to look for packages</string>
+	<plurals name="search_results">
+		<item quantity="one">%1$d result for \"%2$s\": </item>
+		<item quantity="other">%1$d results for \"%2$s\": </item>
+	</plurals>
+	<string name="search_no_results">No results found for \"%s\"</string>
+	<!-- ACRA error reporting. -->
+	<string name="crash_notif_ticker_text">BotBrew has crashed&#8230;</string>
+	<string name="crash_notif_title">BotBrew has crashed&#8230;</string>
+	<string name="crash_notif_text">Please tap here to help fix the issue.</string>
+	<string name="crash_dialog_title">BotBrew</string>
+	<string name="crash_dialog_text">Whoops! It seems that there\'s a bug. We\'d like to fix this issue, but we don\'t believe in collecting information from your device without permission. Please consider sending us an anonymous error report; all you have to do is tap \'OK\'.</string>
+	<string name="crash_dialog_comment_prompt">You may add more information to the report, or tell us your email address so we could respond:</string>
+	<string name="crash_dialog_ok_toast">Thanks!</string>
+</resources>

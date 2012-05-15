@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:text="Welcome." />
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:text="I'm here to help you install BotBrew. The first step is to set up a minimal system that's able to install more software. In many cases, this is all we need to do. But if you want, we could go ahead and install Debian afterwards. Please select where you want to install BotBrew, and tap the `proceed' button below." />
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_weight="1" />
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_vertical">
+		<Spinner
+			android:id="@+id/location"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:prompt="@string/prompt_location" />
+		<Button
+			android:id="@+id/proceed"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Proceed" />
+	</LinearLayout>
+</LinearLayout>
