@@ -98,25 +98,27 @@ public class PackageStatusActivity extends SherlockFragmentActivity {
 					});
 					button.setVisibility(View.VISIBLE);
 				} else {
-					// TODO: upgradable
-					button = (Button)findViewById(R.id.reinstall);
-					button.setOnClickListener(new View.OnClickListener() {
-						@Override
-						public void onClick(View v) {
-							startActivity(intent.putExtra("command","reinstall"));
-							finish();
-						}
-					});
-					button.setVisibility(View.VISIBLE);
-					button = (Button)findViewById(R.id.upgrade);
-					button.setOnClickListener(new View.OnClickListener() {
-						@Override
-						public void onClick(View v) {
-							startActivity(intent.putExtra("command","upgrade"));
-							finish();
-						}
-					});
-					button.setVisibility(View.VISIBLE);
+					if("".equals(upgradable)) {
+						button = (Button)findViewById(R.id.reinstall);
+						button.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								startActivity(intent.putExtra("command","reinstall"));
+								finish();
+							}
+						});
+						button.setVisibility(View.VISIBLE);
+					} else {
+						button = (Button)findViewById(R.id.upgrade);
+						button.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								startActivity(intent.putExtra("command","upgrade"));
+								finish();
+							}
+						});
+						button.setVisibility(View.VISIBLE);
+					}
 					button = (Button)findViewById(R.id.remove);
 					button.setOnClickListener(new View.OnClickListener() {
 						@Override
