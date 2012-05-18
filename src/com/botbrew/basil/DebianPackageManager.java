@@ -149,7 +149,6 @@ public class DebianPackageManager {
 		}
 	}
 	public boolean pm_refresh(final ContentResolver cr) {
-		// TODO: check upgradable status
 		final ArrayList<ContentValues> values = new ArrayList<ContentValues>();
 		try {
 			ContentValues cv;
