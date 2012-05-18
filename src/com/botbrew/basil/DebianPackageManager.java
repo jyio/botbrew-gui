@@ -156,16 +156,39 @@ public class DebianPackageManager {
 			Matcher matcher;
 			String line;
 			// installed packages
-			final HashMap<String,String> installed = new HashMap<String,String>();
+			final HashMap<String,ContentValues> installed = new HashMap<String,ContentValues>();
 			Process p = exec(false,dpkgquery("--show --showformat='${status} ${package} ${version}\\n'"));
 			p.getOutputStream().close();
 			BufferedReader p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			final Pattern re_name_version = Pattern.compile("^install ok installed (\\S+) (\\S+)$");
 			while((line = p_stdout.readLine()) != null) {
 				matcher = re_name_version.matcher(line);
-				if(matcher.find()) installed.put(matcher.group(1),matcher.group(2));
+				if(matcher.find()) {
+					cv = new ContentValues();
+					cv.put(DatabaseOpenHelper.C_INSTALLED,matcher.group(2));
+					cv.put(DatabaseOpenHelper.C_UPGRADABLE,"");
+					installed.put(matcher.group(1),cv);
+				}
 			}
 			BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			if(p.waitFor() != 0) return false;
+			// upgradable packages
+			final DebianPackageManager dpm = new DebianPackageManager(this);
+			dpm.config(Config.APT_Get_Simulate,"1");
+			p = exec(false,dpm.aptget_distupgrade());
+			p.getOutputStream().close();
+			p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			final Pattern re_inst_name_upgradable = Pattern.compile("^Inst (\\S+) \\[(\\S+)\\]");
+			while((line = p_stdout.readLine()) != null) {
+				matcher = re_inst_name_upgradable.matcher(line);
+				if(matcher.find()) {
+					line = matcher.group(1);
+					cv = installed.get(line);
+					if(cv != null) cv.put(DatabaseOpenHelper.C_UPGRADABLE,matcher.group(2));
+				}
+			}
+			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
 			if(p.waitFor() != 0) return false;
 			// available packages
@@ -177,12 +200,14 @@ public class DebianPackageManager {
 				matcher = re_name_summary.matcher(line);
 				if(!matcher.find()) continue;
 				line = matcher.group(1);
-				cv = new ContentValues();
+				cv = installed.get(line);
+				if(cv == null) {
+					cv = new ContentValues();
+					cv.put(DatabaseOpenHelper.C_INSTALLED,"");
+					cv.put(DatabaseOpenHelper.C_UPGRADABLE,"");
+				}
 				cv.put(DatabaseOpenHelper.C_NAME,line);
 				cv.put(DatabaseOpenHelper.C_SUMMARY,matcher.group(2));
-				line = installed.get(line);
-				cv.put(DatabaseOpenHelper.C_INSTALLED,line!=null?line:"");
-				cv.put(DatabaseOpenHelper.C_UPGRADABLE,"");
 				values.add(cv);
 			}
 			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));

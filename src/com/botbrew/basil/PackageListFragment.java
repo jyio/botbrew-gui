@@ -29,7 +29,7 @@ public abstract class PackageListFragment extends SherlockListFragment implement
 				getActivity(),PackageCacheProvider.ContentUri.CACHE_BASE.uri,
 				new String[] {
 					"*",DatabaseOpenHelper.C_NAME+" AS _id",
-					"(CASE WHEN "+DatabaseOpenHelper.C_UPGRADABLE+"='' THEN '' ELSE 'upgradable' END) AS status"
+					"(CASE WHEN "+DatabaseOpenHelper.C_UPGRADABLE+"='' THEN '' ELSE '⇪' END) AS status"
 				},
 				null,null,DatabaseOpenHelper.C_NAME
 			);
@@ -46,7 +46,7 @@ public abstract class PackageListFragment extends SherlockListFragment implement
 				getActivity(),PackageCacheProvider.ContentUri.CACHE_BASE.uri,
 				new String[] {
 					"*",DatabaseOpenHelper.C_NAME+" AS _id",
-					"(CASE WHEN "+DatabaseOpenHelper.C_UPGRADABLE+"='' THEN '' ELSE 'upgradable' END) AS status"
+					"(CASE WHEN "+DatabaseOpenHelper.C_UPGRADABLE+"='' THEN '' ELSE '⇪' END) AS status"
 				},
 				DatabaseOpenHelper.C_INSTALLED+"!=?",new String[] {""},DatabaseOpenHelper.C_NAME
 			);
@@ -61,7 +61,7 @@ public abstract class PackageListFragment extends SherlockListFragment implement
 		public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 			return new CursorLoader(
 				getActivity(),PackageCacheProvider.ContentUri.CACHE_BASE.uri,
-				new String[] {"*",DatabaseOpenHelper.C_NAME+" AS _id","'upgradable' AS status"},
+				new String[] {"*",DatabaseOpenHelper.C_NAME+" AS _id","'⇪' AS status"},
 				DatabaseOpenHelper.C_UPGRADABLE+"!=?",new String[] {""},DatabaseOpenHelper.C_NAME
 			);
 		}
