@@ -95,6 +95,12 @@ public class BotBrewApp extends Application {
 	public boolean isWide() {
 		return getScreenWidthDp() >= 800;
 	}
+	public static long getChecksum() {
+		long total = (new File(root,"var/lib/dpkg/status")).lastModified();
+		final File[] items = (new File(root,"var/lib/apt/lists")).listFiles();
+		if(items != null) for(File item: items) total += item.lastModified();
+		return total;
+	}
 	public boolean hasKeyboard() {
 		Configuration c = getResources().getConfiguration();
 		return (c.keyboard == Configuration.KEYBOARD_QWERTY)&&(c.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO);

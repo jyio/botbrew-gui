@@ -126,19 +126,6 @@ public class Main extends SherlockFragmentActivity {
 			finish();
 			return;
 		}
-		boolean firstrun = false;
-		try {
-			long version = getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_META_DATA).versionCode;
-			firstrun = pref.getLong("var_lastversion",0) < version;
-			if(firstrun) {
-				SharedPreferences.Editor editor = pref.edit();
-				editor.putLong("var_lastversion",version);
-				editor.commit();
-			}
-		} catch(PackageManager.NameNotFoundException ex) {}	// wtf
-		if((firstrun)||(pref.getBoolean("interface_launch_webactivity",false))) {
-			if(mApplication.isOnline()) startActivity(new Intent(this,WebActivity.class));
-		}
 		setIntent(intent);
 		String action = intent.getAction();
 		if(Intent.ACTION_VIEW.equals(action)) {
@@ -148,13 +135,30 @@ public class Main extends SherlockFragmentActivity {
 				//	List<String> path = data.getPathSegments();
 				//	OpkgService.requestOpkgInfo(this,path.get(path.size()-1));
 				} else {	// maybe android.intent.category.BROWSABLE
-				//	checkUpdateCache();
+				//	verifyChecksum();
 				//	OpkgService.requestOpkgInstallURL(this,data);
 				}
 			}
 		} else if(Intent.ACTION_SEARCH.equals(action)) {
-		//	checkUpdateCache();
+		//	verifyChecksum();
 		//	OpkgService.requestOpkgInfo(this,intent.getStringExtra(SearchManager.QUERY));
+		} else {
+		//	verifyChecksum();
+		}
+		if(Intent.ACTION_MAIN.equals(action)) {
+			boolean firstrun = false;
+			try {
+				long version = getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_META_DATA).versionCode;
+				firstrun = pref.getLong("var_lastversion",0) < version;
+				if(firstrun) {
+					SharedPreferences.Editor editor = pref.edit();
+					editor.putLong("var_lastversion",version);
+					editor.commit();
+				}
+			} catch(PackageManager.NameNotFoundException ex) {}	// wtf
+			if((firstrun)||(pref.getBoolean("interface_launch_webactivity",false))) {
+				if(mApplication.isOnline()) startActivity(new Intent(this,WebActivity.class));
+			}
 		}
 	}
 	@Override
@@ -169,8 +173,8 @@ public class Main extends SherlockFragmentActivity {
 			case android.R.id.home:
 				startActivity(new Intent(this,WebActivity.class));
 				return true;
-			case R.id.menu_update:
-				onUpdateRequested();
+			case R.id.menu_refresh:
+				onRefreshRequested(true);
 				return true;
 			case R.id.menu_search:
 				onSearchRequested();
@@ -185,6 +189,7 @@ public class Main extends SherlockFragmentActivity {
 	public void onResume() {
 		super.onResume();
 		bindService(new Intent(this,ControllerService.class),mConnection,BIND_AUTO_CREATE);
+		if(BotBrewApp.root != null) verifyChecksum();
 	}
 	@Override
 	public void onPause() {
@@ -196,7 +201,7 @@ public class Main extends SherlockFragmentActivity {
 	public void onBackPressed() {
 		if(!mLocked) super.onBackPressed();
 	}
-	protected void onUpdateRequested() {
+	protected void onRefreshRequested(final boolean update) {
 		if(BotBrewApp.root == null) return;
 		final ProgressDialog pd = ProgressDialog.show(this,"Please wait...","Updating the package cache...");
 		pd.setCancelable(false);
@@ -204,11 +209,11 @@ public class Main extends SherlockFragmentActivity {
 			@Override
 			protected Boolean doInBackground(final Void... ign) {
 				mLocked = true;
-				Log.v(TAG,"-> onUpdateRequested()");
+				Log.v(TAG,"-> onUpdateRequested("+update+")");
 				final DebianPackageManager dpm = new DebianPackageManager(BotBrewApp.root.getAbsolutePath());
-				dpm.pm_update();
+				if(update) dpm.pm_update();
 				final boolean result = dpm.pm_refresh(getContentResolver());
-				Log.v(TAG,"<- onUpdateRequested()");
+				Log.v(TAG,"<- onUpdateRequested("+update+")");
 				return result;
 			}
 			@Override
@@ -222,5 +227,16 @@ public class Main extends SherlockFragmentActivity {
 				pd.dismiss();
 			}
 		}).execute();
+	}
+	protected boolean verifyChecksum() {
+		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+		final long dbchecksum = BotBrewApp.getChecksum();
+		if(dbchecksum != pref.getLong("var_dbchecksum",-1)) {
+			SharedPreferences.Editor editor = pref.edit();
+			editor.putLong("var_dbchecksum",dbchecksum);
+			editor.commit();
+			onRefreshRequested(false);
+			return true;
+		} else return false;
 	}
 }
