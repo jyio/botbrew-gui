@@ -15,6 +15,11 @@
 		android:text="I'm here to help you install BotBrew. The first step is to set up a minimal system that's able to install more software. In many cases, this is all we need to do. But if you want, we could go ahead and install Debian afterwards. Please select where you want to install BotBrew, and tap the `proceed' button below." />
 	<TextView
 		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:text="n.b.: Installation to /emmc, /sdcard, or /usbdisk uses a loop-mounted disk image. This is suboptimal in terms of performance and reliability." />
+	<TextView
+		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:layout_weight="1" />
 	<LinearLayout

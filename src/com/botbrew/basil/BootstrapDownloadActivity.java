@@ -38,13 +38,15 @@ public class BootstrapDownloadActivity extends SherlockFragmentActivity {
 		});
 		vProgress = (ProgressBar)findViewById(R.id.progress);
 		vProgress.setIndeterminate(false);
+		final boolean loop = getIntent().getBooleanExtra("loop",false);
 		(new AsyncTask<Void,Integer,Boolean>() {
 			@Override
 			protected Boolean doInBackground(final Void... params) {
 				mLocked = true;
 				try {
-					final URL src = new URL("http://repo.botbrew.com/"+codename+"/bootstrap/pkg.zip");
-					final File dst = new File(getCacheDir(),"pkg.zip");
+					final String name = loop?"img.zip":"pkg.zip";
+					final URL src = new URL("http://repo.botbrew.com/"+codename+"/bootstrap/"+name);
+					final File dst = new File(getCacheDir(),name);
 					publishProgress(0);
 					fetch(src,dst);
 					return true;
@@ -69,7 +71,7 @@ public class BootstrapDownloadActivity extends SherlockFragmentActivity {
 					onCancelled(result);
 					return;
 				}
-				startActivity(new Intent(BootstrapDownloadActivity.this,BootstrapInstallActivity.class).putExtra("file",getIntent().getStringExtra("file")));
+				startActivity(new Intent(BootstrapDownloadActivity.this,BootstrapInstallActivity.class).putExtra("file",getIntent().getStringExtra("file")).putExtra("loop",loop));
 				finish();
 			}
 			protected void fetch(final URL fremote, final File flocal) throws IOException {

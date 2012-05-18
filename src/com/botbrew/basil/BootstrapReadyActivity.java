@@ -55,7 +55,8 @@ public class BootstrapReadyActivity extends SherlockFragmentActivity {
 			public void onClick(View v) {
 				final String file = (String)vLocation.getSelectedItem();
 				if(!STR_CUSTOM.equals(file)) {
-					startActivity(new Intent(BootstrapReadyActivity.this,BootstrapDownloadActivity.class).putExtra("file",file));
+					final boolean loop = BotBrewApp.needsLoopMount(file);
+					startActivity(new Intent(BootstrapReadyActivity.this,BootstrapDownloadActivity.class).putExtra("file",file).putExtra("loop",loop));
 					finish();
 				}
 			}

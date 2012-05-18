@@ -47,8 +47,9 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 			}
 		});
 		final String file = (new File(getIntent().getStringExtra("file"))).getAbsolutePath();
-		final File pkg = new File(getCacheDir(),"pkg.zip");
-		final String cmd = pkg.getAbsolutePath();
+		final boolean loop = getIntent().getBooleanExtra("loop",false);
+		final File archive = new File(getCacheDir(),loop?"img.zip":"pkg.zip");
+		final String cmd = archive.getAbsolutePath();
 		int[] pid = new int[] {0};
 		mFD = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 		mFDstdin = new FileOutputStream(mFD);
@@ -60,15 +61,12 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 		mTermSession.setTermOut(mFDstdin);
 		mTermSession.setTermIn(mFDstdout);
 		try {
-			final String init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
 			mFDstdin.write(("set -e\n").getBytes());
 			mFDstdin.write(("chmod 0755 '"+cmd+"'\n").getBytes());
 			mFDstdin.write(("mkdir -p '"+file+"'\n").getBytes());
 			mFDstdin.write(("cd '"+file+"'\n").getBytes());
 			mFDstdin.write(("'"+cmd+"'\n").getBytes());
 			mFDstdin.write(("rm '"+cmd+"'\n").getBytes());
-			mFDstdin.write(("cp '"+init_src+"' init\n").getBytes());
-			mFDstdin.write(("chmod 4755 init\n").getBytes());
 			mFDstdin.write(("exit\n").getBytes());
 			EmulatorView emulator = (EmulatorView)findViewById(R.id.emulator);
 			emulator.attachSession(mTermSession);

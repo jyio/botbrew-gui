@@ -37,23 +37,52 @@ public class BotBrewApp extends Application {
 		final File path_init = new File(path,"init");
 		if(path_init.isFile()) return checkInstall(path_init);
 		final File path_img = new File(path,"fs.img");
-		if(!path_init.isFile()) return false;
+		final File path_busybox = (new File(getCacheDir(),"busybox"));
+		final File path_busybox_src = new File(path,"busybox");
 		try {
 			String line;
-			Process p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
-			OutputStream p_stdin = p.getOutputStream();
-			p_stdin.write(("busybox mount -o loop '"+path_img+"' '"+path+"'").getBytes());
+			Process p;
+			OutputStream p_stdin;
+			BufferedReader p_stderr;
+			boolean mounted = false;
+			if(path_img.isFile()) {
+				boolean busyboxcopy = false;
+				if(!path_busybox.isFile()) {
+					if(path_busybox_src.isFile()) busyboxcopy = true;
+					else return false;
+				}
+				p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+				p_stdin = p.getOutputStream();
+				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
+				if(busyboxcopy) {
+					p_stdin.write(("cp '"+path_busybox_src+"' '"+path_busybox+"'\n").getBytes());
+					p_stdin.write(("chmod 0755 '"+path_busybox+"'\n").getBytes());
+				}
+				p_stdin.write(("busybox mount -o loop '"+path_img+"' '"+path+"'").getBytes());
+				p_stdin.close();
+				p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+				while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+				if(p.waitFor() != 0) return false;
+				mounted = true;
+			}
+			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
+			p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+			p_stdin = p.getOutputStream();
+			p_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
+			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
 			p_stdin.close();
-			BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
 			if(p.waitFor() != 0) return false;
 			if((path_init.isFile())&&(checkInstall(path_init))) return true;
 			p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
 			p_stdin = p.getOutputStream();
+			p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
 			p_stdin.write(("busybox umount '"+path+"'").getBytes());
 			p_stdin.close();
 			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			if(p.waitFor() != 0) return false;
 		} catch(IOException ex) {
 			Log.v(TAG,"IOException");
 		} catch(InterruptedException ex) {
@@ -94,6 +123,17 @@ public class BotBrewApp extends Application {
 	}
 	public boolean isWide() {
 		return getScreenWidthDp() >= 800;
+	}
+	public static boolean needsLoopMount(final String path) {
+		if(
+			(path.startsWith("/sdcard"))||
+			(path.startsWith("/mnt/sdcard"))||
+			(path.startsWith("/emmc"))||
+			(path.startsWith("/mnt/emmc"))||
+			(path.startsWith("/usbdisk"))||
+			(path.startsWith("/mnt/usbdisk"))
+		) return true;
+		else return false;
 	}
 	public static long getChecksum() {
 		long total = (new File(root,"var/lib/dpkg/status")).lastModified();
