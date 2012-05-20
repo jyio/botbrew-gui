@@ -39,10 +39,10 @@ public class BotBrewApp extends Application {
 		final File path_img = new File(path,"fs.img");
 		final File path_busybox = (new File(getCacheDir(),"busybox"));
 		final File path_busybox_src = new File(path,"busybox");
+		Process p;
+		OutputStream p_stdin;
+		boolean mounted = false;
 		try {
-			Process p;
-			OutputStream p_stdin;
-			boolean mounted = false;
 			if(path_img.isFile()) {
 				boolean busyboxcopy = false;
 				if(!path_busybox.isFile()) {
@@ -71,7 +71,12 @@ public class BotBrewApp extends Application {
 			sinkError(p);
 			if(p.waitFor() != 0) return false;
 			if((path_init.isFile())&&(checkInstall(path_init))) return true;
-			if(mounted) {
+		} catch(IOException ex) {
+			Log.v(TAG,"IOException");
+		} catch(InterruptedException ex) {
+			Log.v(TAG,"InterruptedException");
+		} finally {
+			if(mounted) try {
 				p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
 				p_stdin = p.getOutputStream();
 				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
@@ -79,22 +84,18 @@ public class BotBrewApp extends Application {
 				p_stdin.close();
 				sinkError(p);
 				if(p.waitFor() != 0) return false;
+			} catch(IOException ex) {
+			} catch(InterruptedException ex) {
 			}
-		} catch(IOException ex) {
-			Log.v(TAG,"IOException");
-		} catch(InterruptedException ex) {
-			Log.v(TAG,"InterruptedException");
 		}
 		return false;
 	}
 	public boolean checkInstall(final File path_init) {
-		return path_init.isFile();
-		/*if(!path_init.isFile()) return false;
+		if(!path_init.isFile()) return false;
 		try {
-			String line;
 			Process p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
 			OutputStream p_stdin = p.getOutputStream();
-			p_stdin.write((path_init.getAbsolutePath()+" -- /system/bin/sh -c ''").getBytes());
+			p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
 			p_stdin.close();
 			sinkError(p);
 			if(p.waitFor() == 0) return true;
@@ -103,7 +104,7 @@ public class BotBrewApp extends Application {
 		} catch(InterruptedException ex) {
 			Log.v(TAG,"InterruptedException");
 		}
-		return false;*/
+		return false;
 	}
 	public boolean isOnline() {
 		NetworkInfo ni = ((ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
