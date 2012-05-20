@@ -141,7 +141,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		public void onFail() {
 		}
 	}
-	private class UpgradeProxy implements ProcessProxy {
+	private class DistupgradeProxy implements ProcessProxy {
 		private String root;
 		private DebianPackageManager dpm;
 		private String pkg;
@@ -159,7 +159,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 			FileDescriptor fd = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 			mPID = pid[0];
 			FileOutputStream p_stdin = new FileOutputStream(fd);
-			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_upgrade(pkg)+"\n").getBytes());
+			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_distupgrade(pkg)+"\n").getBytes());
 			return fd;
 		}
 		@Override
@@ -201,7 +201,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		if("install".equals(command)) mProxy = new InstallProxy();
 		else if("remove".equals(command)) mProxy = new RemoveProxy();
 		else if("autoremove".equals(command)) mProxy = new AutoremoveProxy();
-		else if("upgrade".equals(command)) mProxy = new UpgradeProxy();
+		else if("upgrade".equals(command)) mProxy = new DistupgradeProxy();
 		if((mProxy == null)||(!mProxy.setup(root,dpm))) {
 			finish();
 			return;
