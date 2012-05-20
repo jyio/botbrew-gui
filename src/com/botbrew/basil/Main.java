@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
@@ -85,6 +86,7 @@ public class Main extends SherlockFragmentActivity {
 	private BotBrewApp mApplication;
 	private PagerAdapter mPagerAdapter;
 	private ViewPager mPager;
+	private Handler mHandler = new Handler();
 	private boolean mLocked = false;
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
@@ -157,7 +159,12 @@ public class Main extends SherlockFragmentActivity {
 				}
 			} catch(PackageManager.NameNotFoundException ex) {}	// wtf
 			if((firstrun)||(pref.getBoolean("interface_launch_webactivity",false))) {
-				if(mApplication.isOnline()) startActivity(new Intent(this,WebActivity.class));
+				mHandler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						if(mApplication.isOnline()) startActivity(new Intent(Main.this,WebActivity.class));
+					}
+				},0);
 			}
 		}
 	}

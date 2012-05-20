@@ -56,12 +56,12 @@ public class PackageCacheProvider extends ContentProvider {
 			case CACHE_BASE:
 				db = mDB.getReadableDatabase();
 				c = db.query(DatabaseOpenHelper.T_PACKAGECACHE,projection,selection,selectionArgs,null,null,sortOrder);
-				c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
+				if(c != null) c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
 				return c;
 			case CACHE_ITEM:
 				db = mDB.getReadableDatabase();
 				c = db.query(DatabaseOpenHelper.T_PACKAGECACHE,projection,DatabaseOpenHelper.C_NAME+"=?",new String[] {uri.getLastPathSegment()},null,null,null);
-				c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
+				if(c != null) c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
 				return c;
 			case CACHE_SUGGEST:
 				if(selectionArgs == null) throw new IllegalArgumentException("selectionArgs must be provided for the Uri: "+uri);
@@ -78,7 +78,7 @@ public class PackageCacheProvider extends ContentProvider {
 					new String[] {selectionArgs[0].toLowerCase()+"*"},
 					null,null,sortOrder
 				);
-				c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
+				if(c != null) c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
 				return c;
 			case CACHE_SEARCH:
 				if(selectionArgs == null) throw new IllegalArgumentException("selectionArgs must be provided for the Uri: "+uri);
@@ -93,7 +93,7 @@ public class PackageCacheProvider extends ContentProvider {
 					new String[] {selectionArgs[0].toLowerCase()},
 					null,null,sortOrder
 				);
-				c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
+				if(c != null) c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
 				return c;
 		}
 		throw new IllegalArgumentException("Unsupported URI "+uri);
@@ -153,7 +153,7 @@ public class PackageCacheProvider extends ContentProvider {
 					numInserted = values.length;
 				} finally {
 					db.endTransaction();
-					if(success) getContext().getContentResolver().notifyChange(ContentUri.CACHE_BASE.uri,null);
+					getContext().getContentResolver().notifyChange(ContentUri.CACHE_BASE.uri,null);
 				}
 				return numInserted;
 		}
