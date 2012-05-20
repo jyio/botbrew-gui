@@ -65,7 +65,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 			mFDstdin.write(("chmod 0755 '"+cmd+"'\n").getBytes());
 			mFDstdin.write(("mkdir -p '"+file+"'\n").getBytes());
 			mFDstdin.write(("cd '"+file+"'\n").getBytes());
-			mFDstdin.write(("'"+cmd+"'\n").getBytes());
+			mFDstdin.write(("'"+cmd+"' -n\n").getBytes());
 			mFDstdin.write(("rm '"+cmd+"'\n").getBytes());
 			mFDstdin.write(("exit\n").getBytes());
 			EmulatorView emulator = (EmulatorView)findViewById(R.id.emulator);
