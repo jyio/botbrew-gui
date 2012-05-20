@@ -48,8 +48,7 @@ public class PackageStatusActivity extends SherlockFragmentActivity {
 						sb.append(line);
 						sb.append("\n");
 					}
-					BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-					while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+					BotBrewApp.sinkError(p);
 					return p.waitFor() == 0;
 				} catch(IOException ex) {
 					Log.v(TAG,"IOException");

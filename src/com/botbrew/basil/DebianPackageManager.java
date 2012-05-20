@@ -1,8 +1,11 @@
 package com.botbrew.basil;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -11,6 +14,8 @@ import java.util.regex.Pattern;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.util.Log;
 
 public class DebianPackageManager {
@@ -51,6 +56,17 @@ public class DebianPackageManager {
 			defval = d;
 		}
 	}
+	public static final String arch_native = Build.CPU_ABI.toLowerCase();
+	public static final String arch =
+		"device-"+Build.DEVICE.toLowerCase()+
+		",cpu-abi-"+Build.CPU_ABI.toLowerCase()+
+		",cpu-abi2-"+Build.CPU_ABI2.toLowerCase()+
+		",board-"+Build.BOARD.toLowerCase()+
+		",android"+
+	//	("armeabi".equals(arch_native)?",armel":(","+arch_native))+
+		","+Build.DEVICE.toLowerCase()+		// TODO: remove after dpkg transition
+		","+Build.CPU_ABI.toLowerCase()+	// TODO: remove after dpkg transition
+		","+Build.CPU_ABI2.toLowerCase();	// TODO: remove after dpkg transition
 	private static Runtime runtime = Runtime.getRuntime();
 	protected final EnumMap<Config,String> mConfig = new EnumMap<Config,String>(Config.class);
 	public final String root;
@@ -68,6 +84,21 @@ public class DebianPackageManager {
 	public void config(final EnumMap<Config,String> config) {
 		mConfig.clear();
 		mConfig.putAll(config);
+	}
+	public void config(final SharedPreferences pref) {
+		mConfig.clear();
+		for(Config key: Config.values()) {
+			if(pref.contains(key.name)) try {
+				config(key,pref.getBoolean(key.name,false)?"1":"0");
+			} catch(ClassCastException ex0) {
+				try {
+					config(key,pref.getString(key.name,null));
+				} catch(ClassCastException ex1) {}
+			}
+		}
+		if(pref.getBoolean("debian_hack",false)) config(Config.DPkg_Options,"--ignore-depends=libgcc1");
+		String var_pref = pref.getString("apt::architectures",null);
+		config(Config.APT_Architectures,(var_pref==null)||("".equals(var_pref))?arch:arch+","+var_pref);
 	}
 	public String config(final Config key) {
 		return mConfig.get(key);
@@ -128,16 +159,28 @@ public class DebianPackageManager {
 	public String dpkgquery(final String q) {
 		return "dpkg-query "+q;
 	}
-	public boolean pm_update() {
+	public boolean pm_update(final File tmpdir) {
 		try {
-			String line;
-			// installed packages
-			Process p = exec(true,aptget_update());
+			// set architectures
+			File temp = File.createTempFile("botbrew-arch",".conf",tmpdir);
+			FileWriter tempwriter = new FileWriter(temp);
+			tempwriter.write(arch.replace(',','\n'));
+			tempwriter.write('\n');
+			tempwriter.close();
+			final String archconf = "/var/lib/dpkg/arch";
+			Process p = exec(true);
+			final OutputStream p_stdin = p.getOutputStream();
+			p_stdin.write(("cp '"+temp+"' '"+archconf+"' && chmod 0644 '"+archconf+"' && chown 0:0 '"+archconf+"'").getBytes());
+			p_stdin.close();
+			BotBrewApp.sinkOutput(p);
+			BotBrewApp.sinkError(p);
+			temp.delete();
+			if(p.waitFor() != 0) return false;
+			// update
+			p = exec(true,aptget_update());
 			p.getOutputStream().close();
-			BufferedReader p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			while((line = p_stdout.readLine()) != null) Log.v(TAG,"[STDOUT] "+line);
-			BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			BotBrewApp.sinkOutput(p);
+			BotBrewApp.sinkError(p);
 			if(p.waitFor() != 0) return false;
 			return true;
 		} catch(IOException e) {
@@ -169,8 +212,7 @@ public class DebianPackageManager {
 					installed.put(matcher.group(1),cv);
 				}
 			}
-			BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			BotBrewApp.sinkError(p);
 			if(p.waitFor() != 0) return false;
 			// upgradable packages
 			final DebianPackageManager dpm = new DebianPackageManager(this);
@@ -187,8 +229,7 @@ public class DebianPackageManager {
 					if(cv != null) cv.put(DatabaseOpenHelper.C_UPGRADABLE,matcher.group(2));
 				}
 			}
-			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			BotBrewApp.sinkError(p);
 			if(p.waitFor() != 0) return false;
 			// available packages
 			p = exec(false,aptcache_search());
@@ -209,8 +250,7 @@ public class DebianPackageManager {
 				cv.put(DatabaseOpenHelper.C_SUMMARY,matcher.group(2));
 				values.add(cv);
 			}
-			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			BotBrewApp.sinkError(p);
 			if(p.waitFor() != 0) return false;
 		} catch(IOException e) {
 			Log.v(TAG,"IOException: cannot refresh database");
@@ -224,13 +264,18 @@ public class DebianPackageManager {
 		cr.bulkInsert(PackageCacheProvider.ContentUri.CACHE_BASE.uri,a);
 		return true;
 	}
-	protected Process exec(final boolean superuser, final String command) throws IOException {
+	protected Process exec(final boolean superuser) throws IOException {
+		return runtime.exec(new String[] {superuser?"/system/xbin/su":shell});
+	}
+	protected Process exec(final boolean superuser, final CharSequence command) throws IOException {
+		final Process p = exec(superuser);
 		final StringBuilder sb = new StringBuilder();
 		sb.append("exec ");
 		sb.append(root);
 		sb.append("/init -- ");
 		sb.append(command);
 		if(redirect) sb.append(" 2>&1");
-		return runtime.exec(new String[] {superuser?"/system/xbin/su":shell,"-c",sb.toString()});
+		p.getOutputStream().write(sb.toString().getBytes());
+		return p;
 	}
 }

@@ -14,13 +14,11 @@ import java.io.IOException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -179,17 +177,6 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		public void onFail() {
 		}
 	}
-	public static final String arch_native = Build.CPU_ABI.toLowerCase();
-	public static final String arch =
-		"device-"+Build.DEVICE.toLowerCase()+
-		",cpu-abi-"+Build.CPU_ABI.toLowerCase()+
-		",cpu-abi2-"+Build.CPU_ABI2.toLowerCase()+
-		",board-"+Build.BOARD.toLowerCase()+
-		",android"+
-		("armeabi".equals(arch_native)?",armel":(","+arch_native))+
-		","+Build.DEVICE.toLowerCase()+		// TODO: remove after dpkg transition
-		","+Build.CPU_ABI.toLowerCase()+	// TODO: remove after dpkg transition
-		","+Build.CPU_ABI2.toLowerCase();	// TODO: remove after dpkg transition
 	private BotBrewApp mApp;
 	private ProcessProxy mProxy;
 	private FileDescriptor mFD;
@@ -208,24 +195,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final String root = (new File(pref.getString("var_root",BotBrewApp.default_root))).getAbsolutePath();
 		final DebianPackageManager dpm = new DebianPackageManager(root);
-		for(DebianPackageManager.Config key: DebianPackageManager.Config.values()) {
-			if(pref.contains(key.name)) try {
-				dpm.config(key,pref.getBoolean(key.name,false)?"1":"0");
-			} catch(ClassCastException ex0) {
-				try {
-					dpm.config(key,pref.getString(key.name,null));
-				} catch(ClassCastException ex1) {}
-			}
-		}
-		if(pref.getBoolean("debian_hack",false)) dpm.config(
-			DebianPackageManager.Config.DPkg_Options,
-			"--ignore-depends=libgcc1"
-		);
-		String var_pref = pref.getString("apt::architectures",null);
-		dpm.config(
-			DebianPackageManager.Config.APT_Architectures,
-			(var_pref==null)||("".equals(var_pref))?arch:arch+","+var_pref
-		);
+		dpm.config(pref);
 		final Intent intent = getIntent();
 		final String command = intent.getStringExtra("command");
 		if("install".equals(command)) mProxy = new InstallProxy();

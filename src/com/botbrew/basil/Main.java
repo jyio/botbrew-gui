@@ -189,7 +189,7 @@ public class Main extends SherlockFragmentActivity {
 	public void onResume() {
 		super.onResume();
 		bindService(new Intent(this,ControllerService.class),mConnection,BIND_AUTO_CREATE);
-		if(BotBrewApp.root != null) verifyChecksum();
+		if(BotBrewApp.root != null) conditionalRefresh(false);
 	}
 	@Override
 	public void onPause() {
@@ -211,8 +211,13 @@ public class Main extends SherlockFragmentActivity {
 				mLocked = true;
 				Log.v(TAG,"-> onUpdateRequested("+update+")");
 				final DebianPackageManager dpm = new DebianPackageManager(BotBrewApp.root.getAbsolutePath());
-				if(update) dpm.pm_update();
+				PreferenceManager.setDefaultValues(Main.this,R.xml.preference,false);
+				dpm.config(PreferenceManager.getDefaultSharedPreferences(Main.this));
+				if(update) dpm.pm_update(getCacheDir());
 				final boolean result = dpm.pm_refresh(getContentResolver());
+				final SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(Main.this).edit();
+				editor.putLong("var_dbchecksum",BotBrewApp.getChecksum());
+				editor.commit();
 				Log.v(TAG,"<- onUpdateRequested("+update+")");
 				return result;
 			}
@@ -228,14 +233,11 @@ public class Main extends SherlockFragmentActivity {
 			}
 		}).execute();
 	}
-	protected boolean verifyChecksum() {
+	protected boolean conditionalRefresh(final boolean update) {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final long dbchecksum = BotBrewApp.getChecksum();
 		if(dbchecksum != pref.getLong("var_dbchecksum",-1)) {
-			SharedPreferences.Editor editor = pref.edit();
-			editor.putLong("var_dbchecksum",dbchecksum);
-			editor.commit();
-			onRefreshRequested(false);
+			onRefreshRequested(update);
 			return true;
 		} else return false;
 	}

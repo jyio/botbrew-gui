@@ -40,10 +40,8 @@ public class BotBrewApp extends Application {
 		final File path_busybox = (new File(getCacheDir(),"busybox"));
 		final File path_busybox_src = new File(path,"busybox");
 		try {
-			String line;
 			Process p;
 			OutputStream p_stdin;
-			BufferedReader p_stderr;
 			boolean mounted = false;
 			if(path_img.isFile()) {
 				boolean busyboxcopy = false;
@@ -60,8 +58,7 @@ public class BotBrewApp extends Application {
 				}
 				p_stdin.write(("busybox mount -o loop '"+path_img+"' '"+path+"'").getBytes());
 				p_stdin.close();
-				p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-				while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+				sinkError(p);
 				if(p.waitFor() != 0) return false;
 				mounted = true;
 			}
@@ -71,18 +68,18 @@ public class BotBrewApp extends Application {
 			p_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
 			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
 			p_stdin.close();
-			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			sinkError(p);
 			if(p.waitFor() != 0) return false;
 			if((path_init.isFile())&&(checkInstall(path_init))) return true;
-			p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
-			p_stdin = p.getOutputStream();
-			p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
-			p_stdin.write(("busybox umount '"+path+"'").getBytes());
-			p_stdin.close();
-			p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
-			if(p.waitFor() != 0) return false;
+			if(mounted) {
+				p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+				p_stdin = p.getOutputStream();
+				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
+				p_stdin.write(("busybox umount '"+path+"'").getBytes());
+				p_stdin.close();
+				sinkError(p);
+				if(p.waitFor() != 0) return false;
+			}
 		} catch(IOException ex) {
 			Log.v(TAG,"IOException");
 		} catch(InterruptedException ex) {
@@ -99,8 +96,7 @@ public class BotBrewApp extends Application {
 			OutputStream p_stdin = p.getOutputStream();
 			p_stdin.write((path_init.getAbsolutePath()+" -- /system/bin/sh -c ''").getBytes());
 			p_stdin.close();
-			BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
+			sinkError(p);
 			if(p.waitFor() == 0) return true;
 		} catch(IOException ex) {
 			Log.v(TAG,"IOException");
@@ -152,5 +148,15 @@ public class BotBrewApp extends Application {
 	public void doToggleSoftKeyboard() {
 		InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
 		imm.toggleSoftInput(0,0);
+	}
+	public static void sinkOutput(final Process p) throws IOException {
+		String line;
+		final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
+		while((line = p_stdout.readLine()) != null) Log.v(TAG,"[STDOUT] "+line);
+	}
+	public static void sinkError(final Process p) throws IOException {
+		String line;
+		final BufferedReader p_stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+		while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
 	}
 }
