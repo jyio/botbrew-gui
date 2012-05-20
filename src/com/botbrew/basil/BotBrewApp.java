@@ -41,7 +41,7 @@ public class BotBrewApp extends Application {
 		final File path_busybox_src = new File(path,"busybox");
 		Process p;
 		OutputStream p_stdin;
-		boolean mounted = false;
+		boolean unmount = false;
 		try {
 			if(path_img.isFile()) {
 				boolean busyboxcopy = false;
@@ -60,7 +60,7 @@ public class BotBrewApp extends Application {
 				p_stdin.close();
 				sinkError(p);
 				if(p.waitFor() != 0) return false;
-				mounted = true;
+				unmount = true;
 			}
 			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
 			p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
@@ -70,13 +70,16 @@ public class BotBrewApp extends Application {
 			p_stdin.close();
 			sinkError(p);
 			if(p.waitFor() != 0) return false;
-			if((path_init.isFile())&&(checkInstall(path_init))) return true;
+			if((path_init.isFile())&&(checkInstall(path_init))) {
+				unmount = false;
+				return true;
+			}
 		} catch(IOException ex) {
 			Log.v(TAG,"IOException");
 		} catch(InterruptedException ex) {
 			Log.v(TAG,"InterruptedException");
 		} finally {
-			if(mounted) try {
+			if(unmount) try {
 				p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
 				p_stdin = p.getOutputStream();
 				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
