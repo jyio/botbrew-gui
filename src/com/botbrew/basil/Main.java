@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Vector;
 
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -134,8 +135,8 @@ public class Main extends SherlockFragmentActivity {
 			Uri data = intent.getData();
 			if(data != null) {
 				if("content".equals(data.getScheme())) {
-				//	List<String> path = data.getPathSegments();
-				//	OpkgService.requestOpkgInfo(this,path.get(path.size()-1));
+					List<String> path = data.getPathSegments();
+					startActivity((new Intent(this,PackageStatusActivity.class)).putExtra("package",path.get(path.size()-1)));
 				} else {	// maybe android.intent.category.BROWSABLE
 				//	verifyChecksum();
 				//	OpkgService.requestOpkgInstallURL(this,data);
@@ -143,7 +144,7 @@ public class Main extends SherlockFragmentActivity {
 			}
 		} else if(Intent.ACTION_SEARCH.equals(action)) {
 		//	verifyChecksum();
-		//	OpkgService.requestOpkgInfo(this,intent.getStringExtra(SearchManager.QUERY));
+			startActivity((new Intent(this,PackageStatusActivity.class)).putExtra("package",intent.getStringExtra(SearchManager.QUERY)));
 		} else {
 		//	verifyChecksum();
 		}
