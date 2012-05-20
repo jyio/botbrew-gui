@@ -168,10 +168,8 @@ public class DebianPackageManager {
 			tempwriter.write('\n');
 			tempwriter.close();
 			final String archconf = "/var/lib/dpkg/arch";
-			Process p = exec(true);
-			final OutputStream p_stdin = p.getOutputStream();
-			p_stdin.write(("cp '"+temp+"' '"+archconf+"' && chmod 0644 '"+archconf+"' && chown 0:0 '"+archconf+"'").getBytes());
-			p_stdin.close();
+			Process p = exec(true,"sh -c \"cp '"+temp+"' '"+archconf+"' && chmod 0644 '"+archconf+"' && chown 0:0 '"+archconf+"'\"");
+			p.getOutputStream().close();
 			BotBrewApp.sinkOutput(p);
 			BotBrewApp.sinkError(p);
 			temp.delete();
@@ -232,7 +230,7 @@ public class DebianPackageManager {
 			BotBrewApp.sinkError(p);
 			if(p.waitFor() != 0) return false;
 			// available packages
-			p = exec(false,aptcache_search());
+			p = exec(false,(new DebianPackageManager(root)).aptcache_search());
 			p.getOutputStream().close();
 			p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			final Pattern re_name_summary = Pattern.compile("^(\\S+) - (.*)$");

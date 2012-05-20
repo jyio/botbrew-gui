@@ -168,6 +168,7 @@ public class Main extends SherlockFragmentActivity {
 				},0);
 			}
 		}
+		if(intent.getBooleanExtra("update",false)) onRefreshRequested(true);
 	}
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
@@ -197,7 +198,7 @@ public class Main extends SherlockFragmentActivity {
 	public void onResume() {
 		super.onResume();
 		bindService(new Intent(this,ControllerService.class),mConnection,BIND_AUTO_CREATE);
-		if(BotBrewApp.root != null) conditionalRefresh(false);
+		if(BotBrewApp.root != null) conditionalRefresh(true);
 	}
 	@Override
 	public void onPause() {
@@ -224,7 +225,8 @@ public class Main extends SherlockFragmentActivity {
 				if(update) dpm.pm_update(getCacheDir());
 				final boolean result = dpm.pm_refresh(getContentResolver());
 				final SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(Main.this).edit();
-				editor.putLong("var_dbchecksum",BotBrewApp.getChecksum());
+				editor.putLong("var_dbChecksumSource",BotBrewApp.checksumSource());
+				editor.putLong("var_dbChecksumCache",BotBrewApp.checksumCache());
 				editor.commit();
 				Log.v(TAG,"<- onUpdateRequested("+update+")");
 				return result;
@@ -243,10 +245,14 @@ public class Main extends SherlockFragmentActivity {
 	}
 	protected boolean conditionalRefresh(final boolean update) {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-		final long dbchecksum = BotBrewApp.getChecksum();
-		if(dbchecksum != pref.getLong("var_dbchecksum",-1)) {
-			onRefreshRequested(update);
+		if((update)&&(BotBrewApp.checksumSource() != pref.getLong("var_dbChecksumSource",-1))) {
+			onRefreshRequested(true);
 			return true;
-		} else return false;
+		}
+		if(BotBrewApp.checksumCache() != pref.getLong("var_dbChecksumCache",-1)) {
+			onRefreshRequested(false);
+			return true;
+		}
+		return false;
 	}
 }

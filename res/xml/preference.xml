@@ -91,12 +91,6 @@
 			android:summaryOff="do not show packages that are to be upgraded"
 			android:defaultValue="true" />
 		<CheckBoxPreference
-			android:key="apt::get::show-upgraded"
-			android:title="APT::Get::Show-Upgraded"
-			android:summaryOn="show packages that are to be upgraded"
-			android:summaryOff="do not show packages that are to be upgraded"
-			android:defaultValue="true" />
-		<CheckBoxPreference
 			android:key="apt::get::show-versions"
 			android:title="APT::Get::Show-Versions"
 			android:summaryOn="show full versions for upgraded and installed packages"
@@ -116,37 +110,37 @@
 			android:defaultValue="false" />
 		<CheckBoxPreference
 			android:key="apt::get::print-uris"
-			android:title="APT::Get::APT::Get::Print-URIs"
+			android:title="APT::Get::Print-URIs"
 			android:summaryOn="print URI's instead of fetching files"
 			android:summaryOff="fetch files without printing URI's"
 			android:defaultValue="false" />
 		<CheckBoxPreference
 			android:key="apt::get::reinstall"
-			android:title="APT::Get::APT::Get::ReInstall"
+			android:title="APT::Get::ReInstall"
 			android:summaryOn="reinstall packages that are already at the latest version"
 			android:summaryOff="do not reinstall packages that are already installed"
 			android:defaultValue="false" />
 		<CheckBoxPreference
 			android:key="apt::get::list-cleanup"
-			android:title="APT::Get::APT::Get::List-Cleanup"
+			android:title="APT::Get::List-Cleanup"
 			android:summaryOn="automatically remove obsolete package lists"
 			android:summaryOff="do not automatically remove obsolete package lists"
 			android:defaultValue="true" />
 		<CheckBoxPreference
 			android:key="apt::get::trivial-only"
-			android:title="APT::Get::APT::Get::Trivial-Only"
+			android:title="APT::Get::Trivial-Only"
 			android:summaryOn="automatically answer `no' to most prompts"
 			android:summaryOff="wait for interactive input"
 			android:defaultValue="false" />
 		<CheckBoxPreference
 			android:key="apt::get::remove"
-			android:title="APT::Get::APT::Get::Remove"
+			android:title="APT::Get::Remove"
 			android:summaryOn="allow package removal"
 			android:summaryOff="disallow package removal"
 			android:defaultValue="true" />
 		<CheckBoxPreference
 			android:key="apt::get::purge"
-			android:title="APT::Get::APT::Get::Purge"
+			android:title="APT::Get::Purge"
 			android:summaryOn="purge configuration after package removal"
 			android:summaryOff="keep configuration after package removal"
 			android:defaultValue="true" />

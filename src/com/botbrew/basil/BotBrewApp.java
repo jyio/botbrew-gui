@@ -135,7 +135,13 @@ public class BotBrewApp extends Application {
 		) return true;
 		else return false;
 	}
-	public static long getChecksum() {
+	public static long checksumSource() {
+		long total = (new File(root,"etc/apt/sources.list")).lastModified();
+		final File[] items = (new File(root,"etc/apt/sources.list.d")).listFiles();
+		if(items != null) for(File item: items) total += item.lastModified();
+		return total;
+	}
+	public static long checksumCache() {
 		long total = (new File(root,"var/lib/dpkg/status")).lastModified();
 		final File[] items = (new File(root,"var/lib/apt/lists")).listFiles();
 		if(items != null) for(File item: items) total += item.lastModified();

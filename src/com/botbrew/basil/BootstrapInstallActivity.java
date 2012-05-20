@@ -101,7 +101,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 					SharedPreferences.Editor editor = pref.edit();
 					editor.putString("var_root",file);
 					editor.commit();
-					startActivity(new Intent(BootstrapInstallActivity.this,Main.class));
+					startActivity((new Intent(BootstrapInstallActivity.this,Main.class)).putExtra("update",true));
 					finish();
 				}
 			}).execute();

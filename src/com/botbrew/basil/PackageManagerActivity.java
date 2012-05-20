@@ -236,7 +236,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 				protected void onCancelled(Integer result) {
 					mProxy.onFail();
 					final TextView vResult = (TextView)findViewById(R.id.result);
-					vResult.setText("fail");
+					vResult.setText("fail (press back)");
 					vResult.setVisibility(View.VISIBLE);
 					mLocked = false;
 				}
@@ -248,7 +248,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 					}
 					mProxy.onSuccess();
 					final TextView vResult = (TextView)findViewById(R.id.result);
-					vResult.setText("win");
+					vResult.setText("win (press back)");
 					vResult.setVisibility(View.VISIBLE);
 					mLocked = false;
 				}
