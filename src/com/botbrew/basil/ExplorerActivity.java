@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 // https://gist.github.com/1362410
@@ -42,6 +43,10 @@ public class ExplorerActivity extends SherlockFragmentActivity {
 		super.onCreate(savedInstanceState);
 		mIsWide = ((BotBrewApp)getApplicationContext()).isWide();
 		setContentView(mIsWide?R.layout.explorer_activity_wide:R.layout.explorer_activity);
+		ActionBar actionbar = getSupportActionBar();
+		actionbar.setHomeButtonEnabled(true);
+		actionbar.setDisplayHomeAsUpEnabled(true);
+		actionbar.setDisplayUseLogoEnabled(true);
 		initialize(getIntent().getStringExtra("file"));
 		listFiles(mDirectory);
 	}

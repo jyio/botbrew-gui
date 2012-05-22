@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
 
 public class PackageManagerActivity extends SherlockFragmentActivity {
 	private static interface ProcessProxy {
@@ -190,7 +191,8 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		setContentView(R.layout.package_manager_activity);
 		ActionBar actionbar = getSupportActionBar();
 		actionbar.setHomeButtonEnabled(true);
-		actionbar.setDisplayUseLogoEnabled(false);
+		actionbar.setDisplayHomeAsUpEnabled(true);
+		actionbar.setDisplayUseLogoEnabled(true);
 		PreferenceManager.setDefaultValues(this,R.xml.preference,false);
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final String root = (new File(pref.getString("var_root",BotBrewApp.default_root))).getAbsolutePath();
@@ -258,6 +260,15 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 			Exec.close(mFD);
 			mProxy.onFail();
 		}
+	}
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+			case android.R.id.home:
+				if(!mLocked) startActivity((new Intent(this,Main.class)).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+				return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 	@Override
 	public void onBackPressed() {

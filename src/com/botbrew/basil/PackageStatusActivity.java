@@ -27,6 +27,7 @@ public class PackageStatusActivity extends SherlockFragmentActivity {
 		setContentView(R.layout.package_status_activity);
 		final ActionBar actionbar = getSupportActionBar();
 		actionbar.setHomeButtonEnabled(true);
+		actionbar.setDisplayHomeAsUpEnabled(true);
 		actionbar.setDisplayUseLogoEnabled(true);
 		final String pkg = getIntent().getStringExtra("package").toLowerCase();
 		if(pkg == null) {

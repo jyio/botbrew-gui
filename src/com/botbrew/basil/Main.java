@@ -214,20 +214,17 @@ public class Main extends SherlockFragmentActivity {
 		if(BotBrewApp.root == null) return;
 		final ProgressDialog pd = ProgressDialog.show(this,"Please wait...","Updating the package cache...");
 		pd.setCancelable(false);
+		PreferenceManager.setDefaultValues(this,R.xml.preference,false);
+		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+		final DebianPackageManager dpm = new DebianPackageManager(BotBrewApp.root.getAbsolutePath());
+		dpm.config(pref);
 		(new AsyncTask<Void,Void,Boolean>() {
 			@Override
 			protected Boolean doInBackground(final Void... ign) {
 				mLocked = true;
 				Log.v(TAG,"-> onUpdateRequested("+update+")");
-				final DebianPackageManager dpm = new DebianPackageManager(BotBrewApp.root.getAbsolutePath());
-				PreferenceManager.setDefaultValues(Main.this,R.xml.preference,false);
-				dpm.config(PreferenceManager.getDefaultSharedPreferences(Main.this));
 				if(update) dpm.pm_update(getCacheDir());
 				final boolean result = dpm.pm_refresh(getContentResolver());
-				final SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(Main.this).edit();
-				editor.putLong("var_dbChecksumSource",BotBrewApp.checksumSource());
-				editor.putLong("var_dbChecksumCache",BotBrewApp.checksumCache());
-				editor.commit();
 				Log.v(TAG,"<- onUpdateRequested("+update+")");
 				return result;
 			}
@@ -238,6 +235,10 @@ public class Main extends SherlockFragmentActivity {
 			}
 			@Override
 			protected void onPostExecute(Boolean result) {
+				final SharedPreferences.Editor editor = pref.edit();
+				editor.putLong("var_dbChecksumSource",BotBrewApp.checksumSource());
+				editor.putLong("var_dbChecksumCache",BotBrewApp.checksumCache());
+				editor.commit();
 				mLocked = false;
 				pd.dismiss();
 			}
