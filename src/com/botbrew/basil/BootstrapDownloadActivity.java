@@ -11,6 +11,7 @@ import java.net.URLConnection;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -48,10 +49,13 @@ public class BootstrapDownloadActivity extends SherlockFragmentActivity {
 					final URL src = new URL("http://repo.botbrew.com/"+codename+"/bootstrap/"+name);
 					final File dst = new File(getCacheDir(),name);
 					publishProgress(0);
+					Log.v("BotBrew","now downloading "+src+" to"+dst);
 					fetch(src,dst);
 					return true;
 				} catch(MalformedURLException ex) {
+					Log.wtf("BotBrew",ex);
 				} catch(IOException ex) {
+					Log.wtf("BotBrew",ex);
 				}
 				return false;
 			}
