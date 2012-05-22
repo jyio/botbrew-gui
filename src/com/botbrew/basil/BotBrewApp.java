@@ -32,6 +32,7 @@ public class BotBrewApp extends Application {
 	private static final String TAG = "BotBrew";
 	public static final String default_root = "/data/botbrew-basil";
 	public static File root;
+	public static String rootshell = (new File("/system/bin/su")).exists()?"/system/bin/su":"/system/xbin/su";
 	public boolean isInstalled(final File path) {
 		if(!path.isDirectory()) return false;
 		final File path_init = new File(path,"init");
@@ -49,7 +50,7 @@ public class BotBrewApp extends Application {
 					if(path_busybox_src.isFile()) busyboxcopy = true;
 					else return false;
 				}
-				p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+				p = Runtime.getRuntime().exec(new String[] {rootshell});
 				p_stdin = p.getOutputStream();
 				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
 				if(busyboxcopy) {
@@ -63,7 +64,7 @@ public class BotBrewApp extends Application {
 				unmount = true;
 			}
 			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
-			p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+			p = Runtime.getRuntime().exec(new String[] {rootshell});
 			p_stdin = p.getOutputStream();
 			p_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
 			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
@@ -80,7 +81,7 @@ public class BotBrewApp extends Application {
 			Log.v(TAG,"InterruptedException");
 		} finally {
 			if(unmount) try {
-				p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+				p = Runtime.getRuntime().exec(new String[] {rootshell});
 				p_stdin = p.getOutputStream();
 				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
 				p_stdin.write(("busybox umount '"+path+"'").getBytes());
@@ -96,7 +97,7 @@ public class BotBrewApp extends Application {
 	public boolean checkInstall(final File path_init) {
 		if(!path_init.isFile()) return false;
 		try {
-			Process p = Runtime.getRuntime().exec(new String[] {"/system/xbin/su"});
+			Process p = Runtime.getRuntime().exec(new String[] {rootshell});
 			OutputStream p_stdin = p.getOutputStream();
 			p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
 			p_stdin.close();

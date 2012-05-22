@@ -162,6 +162,7 @@ public class DebianPackageManager {
 	public boolean pm_update(final File tmpdir) {
 		try {
 			// set architectures
+			Log.v(TAG,"using architectures "+arch);
 			File temp = File.createTempFile("botbrew-arch",".conf",tmpdir);
 			FileWriter tempwriter = new FileWriter(temp);
 			tempwriter.write(arch.replace(',','\n'));
@@ -263,7 +264,7 @@ public class DebianPackageManager {
 		return true;
 	}
 	protected Process exec(final boolean superuser) throws IOException {
-		return runtime.exec(new String[] {superuser?"/system/xbin/su":shell});
+		return runtime.exec(new String[] {superuser?BotBrewApp.rootshell:shell});
 	}
 	protected Process exec(final boolean superuser, final CharSequence command) throws IOException {
 		final Process p = exec(superuser);

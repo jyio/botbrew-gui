@@ -51,7 +51,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 		final File archive = new File(getCacheDir(),loop?"img.zip":"pkg.zip");
 		final String cmd = archive.getAbsolutePath();
 		int[] pid = new int[] {0};
-		mFD = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
+		mFD = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 		mFDstdin = new FileOutputStream(mFD);
 		mFDstdout = new FileInputStream(mFD);
 		mPID = pid[0];

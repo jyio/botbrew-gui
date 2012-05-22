@@ -48,7 +48,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		@Override
 		public FileDescriptor getSubprocess() throws IOException {
 			int[] pid = new int[] {0};
-			FileDescriptor fd = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
+			FileDescriptor fd = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 			mPID = pid[0];
 			FileOutputStream p_stdin = new FileOutputStream(fd);
 			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_install(pkg)+"\n").getBytes());
@@ -84,7 +84,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		@Override
 		public FileDescriptor getSubprocess() throws IOException {
 			int[] pid = new int[] {0};
-			FileDescriptor fd = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
+			FileDescriptor fd = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 			mPID = pid[0];
 			FileOutputStream p_stdin = new FileOutputStream(fd);
 			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_remove(pkg)+"\n").getBytes());
@@ -120,7 +120,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		@Override
 		public FileDescriptor getSubprocess() throws IOException {
 			int[] pid = new int[] {0};
-			FileDescriptor fd = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
+			FileDescriptor fd = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 			mPID = pid[0];
 			FileOutputStream p_stdin = new FileOutputStream(fd);
 			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_autoremove(pkg)+"\n").getBytes());
@@ -156,7 +156,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		@Override
 		public FileDescriptor getSubprocess() throws IOException {
 			int[] pid = new int[] {0};
-			FileDescriptor fd = Exec.createSubprocess("/system/xbin/su",new String[] {"/system/xbin/su"},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
+			FileDescriptor fd = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
 			mPID = pid[0];
 			FileOutputStream p_stdin = new FileOutputStream(fd);
 			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_distupgrade(pkg)+"\n").getBytes());
