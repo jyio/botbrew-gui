@@ -224,7 +224,7 @@ public class Main extends SherlockFragmentActivity {
 				mLocked = true;
 				Log.v(TAG,"-> onUpdateRequested("+update+")");
 				if(update) dpm.pm_update(getCacheDir());
-				final boolean result = dpm.pm_refresh(getContentResolver());
+				final boolean result = dpm.pm_refresh(getContentResolver(),update);
 				Log.v(TAG,"<- onUpdateRequested("+update+")");
 				return result;
 			}

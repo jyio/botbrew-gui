@@ -5,8 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -190,8 +190,8 @@ public class DebianPackageManager {
 			return false;
 		}
 	}
-	public boolean pm_refresh(final ContentResolver cr) {
-		final ArrayList<ContentValues> values = new ArrayList<ContentValues>();
+	public boolean pm_refresh(final ContentResolver cr, final boolean reload) {
+		Collection<ContentValues> values;
 		try {
 			ContentValues cv;
 			Matcher matcher;
@@ -206,9 +206,11 @@ public class DebianPackageManager {
 				matcher = re_name_version.matcher(line);
 				if(matcher.find()) {
 					cv = new ContentValues();
+					line = matcher.group(1);
+					cv.put(DatabaseOpenHelper.C_NAME,line);
 					cv.put(DatabaseOpenHelper.C_INSTALLED,matcher.group(2));
 					cv.put(DatabaseOpenHelper.C_UPGRADABLE,"");
-					installed.put(matcher.group(1),cv);
+					installed.put(line,cv);
 				}
 			}
 			BotBrewApp.sinkError(p);
@@ -230,27 +232,29 @@ public class DebianPackageManager {
 			}
 			BotBrewApp.sinkError(p);
 			if(p.waitFor() != 0) return false;
-			// available packages
-			p = exec(false,(new DebianPackageManager(root)).aptcache_search());
-			p.getOutputStream().close();
-			p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			final Pattern re_name_summary = Pattern.compile("^(\\S+) - (.*)$");
-			while((line = p_stdout.readLine()) != null) {
-				matcher = re_name_summary.matcher(line);
-				if(!matcher.find()) continue;
-				line = matcher.group(1);
-				cv = installed.get(line);
-				if(cv == null) {
-					cv = new ContentValues();
-					cv.put(DatabaseOpenHelper.C_INSTALLED,"");
-					cv.put(DatabaseOpenHelper.C_UPGRADABLE,"");
+			if(reload) {	// available packages
+				values = new ArrayList<ContentValues>();
+				p = exec(false,(new DebianPackageManager(root)).aptcache_search());
+				p.getOutputStream().close();
+				p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
+				final Pattern re_name_summary = Pattern.compile("^(\\S+) - (.*)$");
+				while((line = p_stdout.readLine()) != null) {
+					matcher = re_name_summary.matcher(line);
+					if(!matcher.find()) continue;
+					line = matcher.group(1);
+					cv = installed.get(line);
+					if(cv == null) {
+						cv = new ContentValues();
+						cv.put(DatabaseOpenHelper.C_NAME,line);
+						cv.put(DatabaseOpenHelper.C_INSTALLED,"");
+						cv.put(DatabaseOpenHelper.C_UPGRADABLE,"");
+					}
+					cv.put(DatabaseOpenHelper.C_SUMMARY,matcher.group(2));
+					values.add(cv);
 				}
-				cv.put(DatabaseOpenHelper.C_NAME,line);
-				cv.put(DatabaseOpenHelper.C_SUMMARY,matcher.group(2));
-				values.add(cv);
-			}
-			BotBrewApp.sinkError(p);
-			if(p.waitFor() != 0) return false;
+				BotBrewApp.sinkError(p);
+				if(p.waitFor() != 0) return false;
+			} else values = installed.values();
 		} catch(IOException e) {
 			Log.v(TAG,"IOException: cannot refresh database");
 			return false;
@@ -260,7 +264,7 @@ public class DebianPackageManager {
 		}
 		final ContentValues[] a = new ContentValues[values.size()];
 		values.toArray(a);
-		cr.bulkInsert(PackageCacheProvider.ContentUri.CACHE_BASE.uri,a);
+		cr.bulkInsert(reload?PackageCacheProvider.ContentUri.UPDATE_RELOAD.uri:PackageCacheProvider.ContentUri.UPDATE_REFRESH.uri,a);
 		return true;
 	}
 	protected Process exec(final boolean superuser) throws IOException {

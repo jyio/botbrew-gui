@@ -21,7 +21,9 @@ public class PackageCacheProvider extends ContentProvider {
 		CACHE_BASE("cache",ContentResolver.CURSOR_DIR_BASE_TYPE+"/cache"),
 		CACHE_ITEM("cache/*",ContentResolver.CURSOR_ITEM_BASE_TYPE+"/cache"),
 		CACHE_SUGGEST(SearchManager.SUGGEST_URI_PATH_QUERY,ContentResolver.CURSOR_DIR_BASE_TYPE+"/cache"),
-		CACHE_SEARCH(SearchManager.SUGGEST_URI_PATH_QUERY+"/*",ContentResolver.CURSOR_ITEM_BASE_TYPE+"/cache");
+		CACHE_SEARCH(SearchManager.SUGGEST_URI_PATH_QUERY+"/*",ContentResolver.CURSOR_ITEM_BASE_TYPE+"/cache"),
+		UPDATE_REFRESH("update/refresh",ContentResolver.CURSOR_DIR_BASE_TYPE+"/cache"),
+		UPDATE_RELOAD("update/reload",ContentResolver.CURSOR_DIR_BASE_TYPE+"/cache");
 		public final String path;
 		public final String type;
 		public final Uri uri;
@@ -114,10 +116,9 @@ public class PackageCacheProvider extends ContentProvider {
 	public int bulkInsert(Uri uri, ContentValues[] values) {
 		final SQLiteDatabase db = mDB.getWritableDatabase();
 		final int match = sUriMatcher.match(uri);
+		boolean success = false;
 		if(match > 0) switch(sContentUriValues[match]) {
-			case CACHE_BASE:
-				boolean success = false;
-				int numInserted = 0;
+			case UPDATE_RELOAD:
 				db.beginTransaction();
 				try {
 					SQLiteStatement stmt1 = db.compileStatement("DELETE FROM "+DatabaseOpenHelper.T_PACKAGECACHE);
@@ -125,7 +126,7 @@ public class PackageCacheProvider extends ContentProvider {
 					SQLiteStatement stmt2 = db.compileStatement("DELETE FROM "+DatabaseOpenHelper.T_PACKAGECACHEFTS);
 					stmt2.execute();
 					stmt1 = db.compileStatement(
-						"INSERT INTO "+DatabaseOpenHelper.T_PACKAGECACHE+"("
+						"INSERT INTO "+DatabaseOpenHelper.T_PACKAGECACHE+" ("
 							+DatabaseOpenHelper.C_NAME+","
 							+DatabaseOpenHelper.C_SUMMARY+","
 							+DatabaseOpenHelper.C_INSTALLED+","
@@ -133,7 +134,7 @@ public class PackageCacheProvider extends ContentProvider {
 						+") values "+"(?,?,?,?)"
 					);
 					stmt2 = db.compileStatement(
-						"INSERT INTO "+DatabaseOpenHelper.T_PACKAGECACHEFTS+"("
+						"INSERT INTO "+DatabaseOpenHelper.T_PACKAGECACHEFTS+" ("
 							+DatabaseOpenHelper.C_NAME+","
 							+DatabaseOpenHelper.C_SUMMARY
 						+") values "+"(?,?)"
@@ -150,12 +151,39 @@ public class PackageCacheProvider extends ContentProvider {
 					}
 					db.setTransactionSuccessful();
 					success = true;
-					numInserted = values.length;
 				} finally {
 					db.endTransaction();
 					getContext().getContentResolver().notifyChange(ContentUri.CACHE_BASE.uri,null);
 				}
-				return numInserted;
+				return values.length;
+			case UPDATE_REFRESH:
+				db.beginTransaction();
+				try {
+					SQLiteStatement stmt = db.compileStatement(
+						"UPDATE "+DatabaseOpenHelper.T_PACKAGECACHE+" SET "
+							+DatabaseOpenHelper.C_INSTALLED+"='',"
+							+DatabaseOpenHelper.C_UPGRADABLE+"=''"
+					);
+					stmt.execute();
+					stmt = db.compileStatement(
+						"UPDATE "+DatabaseOpenHelper.T_PACKAGECACHE+" SET "
+							+DatabaseOpenHelper.C_INSTALLED+"=?,"
+							+DatabaseOpenHelper.C_UPGRADABLE+"=?"
+						+" WHERE "+DatabaseOpenHelper.C_NAME+"=?"
+					);
+					for(ContentValues value: values) {
+						stmt.bindString(1,value.getAsString(DatabaseOpenHelper.C_INSTALLED));
+						stmt.bindString(2,value.getAsString(DatabaseOpenHelper.C_UPGRADABLE));
+						stmt.bindString(3,value.getAsString(DatabaseOpenHelper.C_NAME));
+						stmt.execute();
+					}
+					db.setTransactionSuccessful();
+					success = true;
+				} finally {
+					db.endTransaction();
+					getContext().getContentResolver().notifyChange(ContentUri.CACHE_BASE.uri,null);
+				}
+				return values.length;
 		}
 		throw new IllegalArgumentException("Unsupported URI "+uri);
 	}
