@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:gravity="center_vertical">
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center"
+		android:textStyle="bold"
+		android:text="The following packages are damaged and should be reinstalled, upgraded, or removed:" />
+	<ListView
+		android:id="@android:id/list"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_weight="1" />
+	<TextView
+		android:id="@android:id/empty"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:text="No packages" />
+</LinearLayout>

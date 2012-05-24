@@ -98,14 +98,14 @@ public class Main extends SherlockFragmentActivity {
 		fragmentlist.add(new PackageListFragment.ListAvailable());
 		fragmentlist.add(new PackageListFragment.ListInstalled());
 		fragmentlist.add(new PackageListFragment.ListUpgradable());
-		//fragmentlist.add(new RepairListFragment());
+		fragmentlist.add(new RepairListFragment());
 		mPagerAdapter = new PagerAdapter(getSupportFragmentManager(),fragmentlist);
 		mPager = (ViewPager)findViewById(R.id.mainpager);
 		mPager.setAdapter(mPagerAdapter);
 		// initialize indicator
 		TitlePageIndicator indicator = (TitlePageIndicator)findViewById(R.id.mainindicator);
 		indicator.setViewPager(mPager);
-		/*indicator.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+		indicator.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
 			@Override
 			public void onPageSelected(int position) {
 				Fragment item = mPagerAdapter.getItem(mPager.getCurrentItem());
@@ -113,7 +113,7 @@ public class Main extends SherlockFragmentActivity {
 					((RepairListFragment)item).refresh();
 				} catch(IllegalStateException ex) {}
 			}
-		});*/
+		});
 		ActionBar actionbar = getSupportActionBar();
 		actionbar.setTitle("");
 		actionbar.setHomeButtonEnabled(true);
