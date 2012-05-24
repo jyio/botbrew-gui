@@ -231,7 +231,11 @@ public class Main extends SherlockFragmentActivity {
 			@Override
 			protected void onCancelled(Boolean result) {
 				mLocked = false;
-				pd.dismiss();
+				try {
+					pd.dismiss();
+				} catch(IllegalArgumentException ex) {
+					Log.wtf(TAG,ex);
+				}
 			}
 			@Override
 			protected void onPostExecute(Boolean result) {
@@ -240,7 +244,11 @@ public class Main extends SherlockFragmentActivity {
 				editor.putLong("var_dbChecksumCache",BotBrewApp.checksumCache());
 				editor.commit();
 				mLocked = false;
-				pd.dismiss();
+				try {
+					pd.dismiss();
+				} catch(IllegalArgumentException ex) {
+					Log.wtf(TAG,ex);
+				}
 			}
 		}).execute();
 	}

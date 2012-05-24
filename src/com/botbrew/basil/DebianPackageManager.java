@@ -267,18 +267,14 @@ public class DebianPackageManager {
 		cr.bulkInsert(reload?PackageCacheProvider.ContentUri.UPDATE_RELOAD.uri:PackageCacheProvider.ContentUri.UPDATE_REFRESH.uri,a);
 		return true;
 	}
-	protected Process exec(final boolean superuser) throws IOException {
-		return runtime.exec(new String[] {superuser?BotBrewApp.rootshell:shell});
+	protected Shell.Pipe exec(final boolean superuser) throws IOException {
+		final Shell.Pipe sh = superuser?Shell.Pipe.getRootShell():Shell.Pipe.getUserShell();
+		if(redirect) sh.redirect();
+		return sh;
 	}
 	protected Process exec(final boolean superuser, final CharSequence command) throws IOException {
-		final Process p = exec(superuser);
-		final StringBuilder sb = new StringBuilder();
-		sb.append("exec ");
-		sb.append(root);
-		sb.append("/init -- ");
-		sb.append(command);
-		if(redirect) sb.append(" 2>&1");
-		p.getOutputStream().write(sb.toString().getBytes());
-		return p;
+		final Shell.Pipe sh = exec(superuser);
+		sh.botbrew(root,command);
+		return sh.proc;
 	}
 }
