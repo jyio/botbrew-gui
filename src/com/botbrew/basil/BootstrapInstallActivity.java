@@ -71,6 +71,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 			EmulatorView emulator = (EmulatorView)findViewById(R.id.emulator);
 			emulator.attachSession(mTermSession);
 			emulator.setDensity(getResources().getDisplayMetrics());
+			emulator.setTextSize(16);
 			mApp = (BotBrewApp)getApplicationContext();
 			emulator.setExtGestureListener(new GestureDetector.SimpleOnGestureListener() {
 				@Override
