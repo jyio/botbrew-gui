@@ -77,7 +77,7 @@ public class PackageCacheProvider extends ContentProvider {
 						DatabaseOpenHelper.C_NAME+" AS "+SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID
 					},
 					DatabaseOpenHelper.T_PACKAGECACHEFTS+" MATCH ?",
-					new String[] {selectionArgs[0].toLowerCase()+"*"},
+					new String[] {selectionArgs[0].toLowerCase().replaceAll("(\\S)-","$1 ")+"*"},
 					null,null,sortOrder
 				);
 				if(c != null) c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
@@ -92,7 +92,7 @@ public class PackageCacheProvider extends ContentProvider {
 						DatabaseOpenHelper.C_SUMMARY+" AS "+SearchManager.SUGGEST_COLUMN_TEXT_2
 					},
 					DatabaseOpenHelper.T_PACKAGECACHEFTS+" MATCH ?",
-					new String[] {selectionArgs[0].toLowerCase()},
+					new String[] {selectionArgs[0].toLowerCase().replaceAll("(\\S)-","$1 ")},
 					null,null,sortOrder
 				);
 				if(c != null) c.setNotificationUri(getContext().getContentResolver(),ContentUri.CACHE_BASE.uri);
