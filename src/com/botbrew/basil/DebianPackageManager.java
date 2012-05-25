@@ -163,7 +163,8 @@ public class DebianPackageManager {
 		try {
 			// set architectures
 			Log.v(TAG,"using architectures "+arch);
-			File temp = File.createTempFile("botbrew-arch",".conf",tmpdir);
+			File temp = new File(tmpdir,"arch.conf");
+			temp.delete();
 			FileWriter tempwriter = new FileWriter(temp);
 			tempwriter.write(arch.replace(',','\n'));
 			tempwriter.write('\n');
