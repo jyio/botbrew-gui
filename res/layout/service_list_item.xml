@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center_vertical"
+	android:descendantFocusability="blocksDescendants">
+	<ToggleButton
+		android:id="@+id/service_toggle"
+		android:layout_width="96dip"
+		android:layout_height="wrap_content"
+		android:textOn="ON"
+		android:textOff="OFF" />
+	<RelativeLayout
+		android:id="@+id/service_right"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="4dip"
+		android:layout_marginBottom="4dip"
+		android:layout_marginLeft="12dip"
+		android:gravity="fill">
+		<LinearLayout
+			android:id="@+id/service_line1"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<TextView
+				android:id="@+id/service_name"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAppearance="?android:attr/textAppearanceLarge" />
+		</LinearLayout>
+		<TextView
+			android:id="@+id/service_detail"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/service_line1"
+			android:layout_alignLeft="@+id/service_line1"
+			android:textAppearance="?android:attr/textAppearanceSmall" />
+	</RelativeLayout>
+</LinearLayout>

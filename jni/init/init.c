@@ -73,6 +73,11 @@ static void privdrop(void) {
 #endif
 }
 
+static pid_t child_pid = 0;
+static void sighandler(int signo) {
+	if(child_pid != 0) kill(child_pid,signo);
+}
+
 static int main_clone(struct config *config) {
 	char *initsh = alloca(snprintf(NULL,0,"%s/init.sh",config->target)+1);
 	sprintf(initsh,"%s/init.sh",config->target);
@@ -229,9 +234,30 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"whoops: cannot clone\n");
 		return EXIT_FAILURE;
 	} else {
+		struct sigaction act;
 		int ret;
 		privdrop();
+		memset(&act,0,sizeof(act));
+		act.sa_handler = sighandler;
+		child_pid = pid;
+		sigaction(SIGABRT,&act,0);
+		sigaction(SIGALRM,&act,0);
+		sigaction(SIGHUP,&act,0);
+		sigaction(SIGINT,&act,0);
+		sigaction(SIGQUIT,&act,0);
+		sigaction(SIGTERM,&act,0);
+		sigaction(SIGUSR1,&act,0);
+		sigaction(SIGUSR2,&act,0);
+		sigaction(SIGCONT,&act,0);
+		sigaction(SIGSTOP,&act,0);
+		sigaction(SIGTSTP,&act,0);
+		sigaction(SIGPOLL,&act,0);
+		sigaction(SIGPROF,&act,0);
+		sigaction(SIGURG,&act,0);
+		sigaction(SIGVTALRM,&act,0);
+		sigaction(SIGXCPU,&act,0);
 		while((waitpid(pid,&ret,0)<0)&&(errno == EINTR));
+		child_pid = 0;
 		return WIFEXITED(ret)?WEXITSTATUS(ret):EXIT_FAILURE;
 	}
 }

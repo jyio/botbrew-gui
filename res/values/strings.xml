@@ -19,6 +19,26 @@
 		<item quantity="other">%1$d results for \"%2$s\": </item>
 	</plurals>
 	<string name="search_no_results">No results found for \"%s\"</string>
+	<!-- services -->
+	<string name="menu_start">Start</string>
+	<string name="menu_stop">Stop</string>
+	<string name="menu_sv_up">Start Service</string>
+	<string name="menu_sv_down">Stop Service</string>
+	<string name="menu_sv_once">Start Service Once</string>
+	<string name="menu_sv_stop">Signal: STOP</string>
+	<string name="menu_sv_cont">Signal: CONT</string>
+	<string name="menu_sv_hup">Signal: HUP</string>
+	<string name="menu_sv_alrm">Signal: ALRM</string>
+	<string name="menu_sv_int">Signal: INT</string>
+	<string name="menu_sv_quit">Signal: QUIT</string>
+	<string name="menu_sv_usr1">Signal: USR1</string>
+	<string name="menu_sv_usr2">Signal: USR2</string>
+	<string name="menu_sv_term">Signal: TERM</string>
+	<string name="menu_sv_kill">Signal: KILL</string>
+	<string name="menu_sv_exit">Exit Service</string>
+	<string name="button_supervisor_update_off">Updates\nOFF</string>
+	<string name="button_supervisor_boot_on">Boot\nON</string>
+	<string name="button_supervisor_boot_off">Boot\nOFF</string>
 	<!-- ACRA error reporting. -->
 	<string name="crash_notif_ticker_text">BotBrew has crashed&#8230;</string>
 	<string name="crash_notif_title">BotBrew has crashed&#8230;</string>

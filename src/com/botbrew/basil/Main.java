@@ -188,6 +188,9 @@ public class Main extends SherlockFragmentActivity {
 			case R.id.menu_search:
 				onSearchRequested();
 				return true;
+			case R.id.menu_supervisor:
+				startActivity(new Intent(this,SupervisorActivity.class));
+				return true;
 			case R.id.menu_control:
 				startActivity(new Intent(this,ControlActivity.class));
 				return true;

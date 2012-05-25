@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item
+		android:id="@+id/menu_sv_up"
+		android:title="@string/menu_sv_up" />
+	<item
+		android:id="@+id/menu_sv_down"
+		android:title="@string/menu_sv_down" />
+	<item
+		android:id="@+id/menu_sv_once"
+		android:title="@string/menu_sv_once" />
+	<item
+		android:id="@+id/menu_sv_stop"
+		android:title="@string/menu_sv_stop" />
+	<item
+		android:id="@+id/menu_sv_cont"
+		android:title="@string/menu_sv_cont" />
+	<item
+		android:id="@+id/menu_sv_hup"
+		android:title="@string/menu_sv_hup" />
+	<item
+		android:id="@+id/menu_sv_alrm"
+		android:title="@string/menu_sv_alrm" />
+	<item
+		android:id="@+id/menu_sv_int"
+		android:title="@string/menu_sv_int" />
+	<item
+		android:id="@+id/menu_sv_quit"
+		android:title="@string/menu_sv_quit" />
+	<item
+		android:id="@+id/menu_sv_usr1"
+		android:title="@string/menu_sv_usr1" />
+	<item
+		android:id="@+id/menu_sv_usr2"
+		android:title="@string/menu_sv_usr2" />
+	<item
+		android:id="@+id/menu_sv_term"
+		android:title="@string/menu_sv_term" />
+	<item
+		android:id="@+id/menu_sv_kill"
+		android:title="@string/menu_sv_kill" />
+	<item
+		android:id="@+id/menu_sv_exit"
+		android:title="@string/menu_sv_exit" />
+</menu>

@@ -13,9 +13,15 @@
 		android:orderInCategory="1"
 		android:showAsAction="ifRoom" />
 	<item
+		android:id="@+id/menu_supervisor"
+		android:title="Supervisor"
+		android:icon="@android:drawable/ic_media_play"
+		android:orderInCategory="2"
+		android:showAsAction="ifRoom" />
+	<item
 		android:id="@+id/menu_control"
 		android:title="@string/menu_control"
 		android:icon="@android:drawable/ic_menu_preferences"
-		android:orderInCategory="2"
+		android:orderInCategory="3"
 		android:showAsAction="ifRoom" />
 </menu>
