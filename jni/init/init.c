@@ -39,6 +39,7 @@ static struct mountspec foreign_mounts[] = {
 	{NULL,"/android","tmpfs",MS_NODEV|MS_NOEXEC|MS_NOATIME,"size=1M,mode=0755",0},
 	{"/cache","/android/cache",NULL,MS_BIND,NULL,0},
 	{"/data","/android/data",NULL,MS_BIND,NULL,0},
+	{"/datadata","/android/datadata",NULL,MS_BIND,NULL,0},
 	{"/emmc","/android/emmc",NULL,MS_BIND,NULL,0},
 	{"/sd-ext","/android/sd-ext",NULL,MS_BIND,NULL,0},
 	{"/sdcard","/android/sdcard",NULL,MS_BIND,NULL,0},
@@ -92,8 +93,10 @@ static int main_clone(struct config *config) {
 	}
 	size_t target_len = strlen(config->target);
 	int i;
+	struct stat st;
 	for(i = 0; i < n_foreign_mounts; i++) {
 		struct mountspec m = foreign_mounts[i];
+		if((m.src)&&(stat(m.src,&st) != 0)) continue;
 		size_t dst_len = strlen(m.dst);
 		char *dst = malloc(target_len+dst_len+1);
 		memcpy(dst,config->target,target_len);

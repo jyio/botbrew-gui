@@ -157,6 +157,7 @@ public class Main extends SherlockFragmentActivity {
 					SharedPreferences.Editor editor = pref.edit();
 					editor.putLong("var_lastversion",version);
 					editor.commit();
+					mApplication.nativeInstall(BotBrewApp.root);
 				}
 			} catch(PackageManager.NameNotFoundException ex) {}	// wtf
 			if((firstrun)||(pref.getBoolean("interface_launch_webactivity",false))) {
@@ -168,7 +169,10 @@ public class Main extends SherlockFragmentActivity {
 				},0);
 			}
 		}
-		if(intent.getBooleanExtra("update",false)) onRefreshRequested(true);
+		if(intent.getBooleanExtra("update",false)) {
+			onRefreshRequested(true);
+			intent.removeExtra("update");
+		}
 	}
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {

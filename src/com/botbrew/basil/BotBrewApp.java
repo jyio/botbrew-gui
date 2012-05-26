@@ -110,6 +110,22 @@ public class BotBrewApp extends Application {
 		}
 		return false;
 	}
+	public boolean nativeInstall(final File path) {
+		try {
+			final Shell.Pipe sh = Shell.Pipe.getRootShell();
+			final OutputStream p_stdin = sh.stdin();
+			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
+			final String path_init = (new File(path,"init")).getAbsolutePath();
+			p_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
+			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
+			p_stdin.close();
+			sinkError(sh.proc);
+			return sh.waitFor() == 0;
+		} catch(IOException ex) {
+		} catch(InterruptedException ex) {
+		}
+		return false;
+	}
 	public boolean isOnline() {
 		NetworkInfo ni = ((ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
 		if((ni != null)&&(ni.isConnected())) return true;
