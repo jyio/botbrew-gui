@@ -1,5 +1,6 @@
 package com.botbrew.basil;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import android.app.Activity;
@@ -56,7 +57,13 @@ public class BootstrapReadyActivity extends SherlockFragmentActivity {
 				final String file = (String)vLocation.getSelectedItem();
 				if(!STR_CUSTOM.equals(file)) {
 					final boolean loop = BotBrewApp.needsLoopMount(file);
-					startActivity(new Intent(BootstrapReadyActivity.this,BootstrapDownloadActivity.class).putExtra("file",file).putExtra("loop",loop));
+					boolean rebase = false;
+					if(loop) {
+						if((new File(new File(file),"fs.img")).exists()) rebase = true;
+					} else {
+						if((new File(new File(file),"botbrew")).exists()) rebase = true;
+					}
+					startActivity(new Intent(BootstrapReadyActivity.this,rebase?BootstrapRebaseActivity.class:BootstrapDownloadActivity.class).putExtra("file",file).putExtra("loop",loop));
 					finish();
 				}
 			}

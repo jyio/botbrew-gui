@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 
 public enum IntentType {
+	APP_EXIT(),
+	APP_RESTART(),
 	BOOTSTRAP_STATE_DOWNLOAD(),
 	BOOTSTRAP_STATE_INSTALL(),
 	BOOTSTRAP_STATE_DONE(),

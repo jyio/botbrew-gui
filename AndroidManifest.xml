@@ -79,6 +79,11 @@
 			android:launchMode="singleTop"
 			android:configChanges="orientation|screenSize" />
 		<activity
+			android:name=".BootstrapRebaseActivity"
+			android:label="@string/app_name_bootstrap"
+			android:launchMode="singleTop"
+			android:configChanges="orientation|screenSize" />
+		<activity
 			android:name=".BootstrapDownloadActivity"
 			android:label="@string/app_name_bootstrap"
 			android:launchMode="singleTop"
