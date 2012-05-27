@@ -134,6 +134,7 @@ static int main_clone(struct config *config) {
 		free(newpath);
 	} else setenv("PATH",ENV_PATH":/android/sbin:/system/sbin:/system/bin:/system/xbin",1);
 	unsetenv("LD_LIBRARY_PATH");
+	setenv("BOTBREW_PREFIX",config->target,1);
 	if(config->argv == NULL) {
 		char *argv0[2];
 		argv0[0] = "/init.sh";
