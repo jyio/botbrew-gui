@@ -49,14 +49,16 @@ class RepairListLoader extends AsyncTaskLoader<ArrayList<String>> {
 	public ArrayList<String> loadInBackground() {	// called from AsyncTask
 		ArrayList<String> data = new ArrayList<String>();
 		try {
-			final Shell.Pipe sh = (Pipe)Shell.Pipe.getUserShell().botbrew("reinstdb broken");
-			final BufferedReader ireader = new BufferedReader(new InputStreamReader(sh.stdout()));
+			final Shell.Pipe sh = (Pipe)Shell.Pipe.getUserShell().botbrew(BotBrewApp.root.getAbsolutePath(),"reinstdb broken");
+			sh.stdin().close();
+			final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(sh.stdout()));
 			String line;
-			while((line = ireader.readLine()) != null) {
+			while((line = p_stdout.readLine()) != null) {
 				line = line.trim();
 				if((line.length() > 0)&&(line.indexOf(' ') < 0)) data.add(line);
 			}
-			ireader.close();
+			p_stdout.close();
+			BotBrewApp.sinkError(sh.proc);
 			sh.waitFor();
 		} catch(IOException ex) {
 		} catch(InterruptedException ex) {
