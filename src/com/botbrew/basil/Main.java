@@ -55,7 +55,6 @@ class PagerAdapter extends FragmentPagerAdapter implements TitleProvider {
 }
 
 public class Main extends SherlockFragmentActivity {
-	private static final String TAG = "BBMain";
 	private final Messenger mLocalMessenger = new Messenger(new EnumHandler<MessageType>(MessageType.class) {
 		@Override
 		public void handleMessage(MessageType msg) {
@@ -68,7 +67,7 @@ public class Main extends SherlockFragmentActivity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mRemoteMessenger = new Messenger(service);
-			Log.v(TAG,"onServiceConnected("+className+")");
+			Log.v(BotBrewApp.TAG,"ServiceConnection.onServiceConnected("+className+")");
 			try {
 				Message msg = Message.obtain(null,MessageType.MSG_REGISTER_CLIENT.ordinal());
 				msg.replyTo = mLocalMessenger;
@@ -80,7 +79,7 @@ public class Main extends SherlockFragmentActivity {
 		public void onServiceDisconnected(ComponentName className) {
 			// This is called when the connection with the service has been unexpectedly disconnected - process crashed.
 			mRemoteMessenger = null;
-			Log.v(TAG,"onServiceDisconnected("+className+")");
+			Log.v(BotBrewApp.TAG,"ServiceConnection.onServiceDisconnected("+className+")");
 		}
 	};
 	private Messenger mRemoteMessenger = null;
@@ -229,10 +228,10 @@ public class Main extends SherlockFragmentActivity {
 			@Override
 			protected Boolean doInBackground(final Void... ign) {
 				mLocked = true;
-				Log.v(TAG,"-> onUpdateRequested("+update+")");
+				Log.v(BotBrewApp.TAG,"-> Main.onUpdateRequested("+update+")");
 				if(update) dpm.pm_update(getCacheDir());
 				final boolean result = dpm.pm_refresh(getContentResolver(),update);
-				Log.v(TAG,"<- onUpdateRequested("+update+")");
+				Log.v(BotBrewApp.TAG,"<- Main.onUpdateRequested("+update+")");
 				return result;
 			}
 			@Override
@@ -241,7 +240,7 @@ public class Main extends SherlockFragmentActivity {
 				try {
 					pd.dismiss();
 				} catch(IllegalArgumentException ex) {
-					Log.wtf(TAG,ex);
+					Log.wtf(BotBrewApp.TAG,ex);
 				}
 			}
 			@Override
@@ -254,7 +253,7 @@ public class Main extends SherlockFragmentActivity {
 				try {
 					pd.dismiss();
 				} catch(IllegalArgumentException ex) {
-					Log.wtf(TAG,ex);
+					Log.wtf(BotBrewApp.TAG,ex);
 				}
 			}
 		}).execute();

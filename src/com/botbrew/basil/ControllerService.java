@@ -9,7 +9,6 @@ import android.os.Messenger;
 import android.util.Log;
 
 public class ControllerService extends Service {
-	private static final String TAG = "BBController";
 	private static boolean isRunning = false;
 	protected class StateHandler extends Handler {
 		@Override
@@ -44,11 +43,11 @@ public class ControllerService extends Service {
 		super.onCreate();
 		mState = new ReadyState();
 		isRunning = true;
-		Log.v(TAG,"onCreate()");
+		Log.v(BotBrewApp.TAG,"ControllerService.onCreate()");
 	}
 	@Override
 	public void onDestroy() {
-		Log.v(TAG,"onDestroy()");
+		Log.v(BotBrewApp.TAG,"ControllerService.onDestroy()");
 		isRunning = false;
 		super.onDestroy();
 	}
@@ -62,7 +61,7 @@ public class ControllerService extends Service {
 	}
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.v(TAG,"onStartCommand("+intent+","+flags+","+startId+")");
+		Log.v(BotBrewApp.TAG,"ControllerService.onStartCommand("+intent+","+flags+","+startId+")");
 		return START_STICKY; // run until explicitly stopped.
 	}
 	public static boolean isRunning() {

@@ -19,7 +19,6 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 
 public class PackageStatusActivity extends SherlockFragmentActivity {
-	private static final String TAG = "BBStatus";
 	private boolean mLocked = false;
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
@@ -52,10 +51,10 @@ public class PackageStatusActivity extends SherlockFragmentActivity {
 					BotBrewApp.sinkError(p);
 					return p.waitFor() == 0;
 				} catch(IOException ex) {
-					Log.v(TAG,"IOException");
+					Log.v(BotBrewApp.TAG,"PackageStatusActivity.onCreate(): IOException");
 					return false;
 				} catch(InterruptedException ex) {
-					Log.v(TAG,"InterruptedException");
+					Log.v(BotBrewApp.TAG,"PackageStatusActivity.onCreate(): InterruptedException");
 					return false;
 				}
 			}

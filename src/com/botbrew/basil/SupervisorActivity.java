@@ -51,7 +51,6 @@ public class SupervisorActivity extends SherlockFragmentActivity {
 			handler.removeCallbacks(this);
 		}
 	}
-	private static final String TAG = "Supervisor";
 	private Menu mMenu;
 	private ToggleButton togglerefresh;
 	private ToggleButton toggleboot;
@@ -191,7 +190,7 @@ public class SupervisorActivity extends SherlockFragmentActivity {
 				}
 			}
 		} catch(SocketException ex) {
-			Log.e(TAG,ex.toString());
+			Log.wtf(BotBrewApp.TAG,ex);
 		}
 		return iplist;
 	}

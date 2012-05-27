@@ -19,7 +19,6 @@ import android.os.Build;
 import android.util.Log;
 
 public class DebianPackageManager {
-	private static final String TAG = "BB_PM";
 	public static enum Config {
 		APT_Architectures("APT::Architectures"),
 		APT_IgnoreHold("APT::Ignore-Hold","0"),
@@ -162,7 +161,7 @@ public class DebianPackageManager {
 	public boolean pm_update(final File tmpdir) {
 		try {
 			// set architectures
-			Log.v(TAG,"using architectures "+arch);
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_update(): using architectures "+arch);
 			File temp = new File(tmpdir,"arch.conf");
 			temp.delete();
 			FileWriter tempwriter = new FileWriter(temp);
@@ -184,10 +183,10 @@ public class DebianPackageManager {
 			if(p.waitFor() != 0) return false;
 			return true;
 		} catch(IOException e) {
-			Log.v(TAG,"IOException: cannot refresh database");
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_update(): IOException: cannot refresh database");
 			return false;
 		} catch(InterruptedException ex) {
-			Log.v(TAG,"InterruptedException: cannot refresh database");
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_update(): InterruptedException: cannot refresh database");
 			return false;
 		}
 	}
@@ -257,10 +256,10 @@ public class DebianPackageManager {
 				if(p.waitFor() != 0) return false;
 			} else values = installed.values();
 		} catch(IOException e) {
-			Log.v(TAG,"IOException: cannot refresh database");
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_refresh(): IOException: cannot refresh database");
 			return false;
 		} catch(InterruptedException ex) {
-			Log.v(TAG,"InterruptedException: cannot refresh database");
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_refresh(): InterruptedException: cannot refresh database");
 			return false;
 		}
 		final ContentValues[] a = new ContentValues[values.size()];

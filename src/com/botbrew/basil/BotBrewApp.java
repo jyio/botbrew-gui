@@ -29,7 +29,7 @@ import android.view.inputmethod.InputMethodManager;
 	resDialogOkToast = R.string.crash_dialog_ok_toast
 )
 public class BotBrewApp extends Application {
-	private static final String TAG = "BotBrew";
+	public static final String TAG = "BotBrew";
 	public static final String default_root = "/data/botbrew-basil";
 	public static File root;
 	public static String rootshell = (new File("/system/bin/su")).exists()?"/system/bin/su":"/system/xbin/su";

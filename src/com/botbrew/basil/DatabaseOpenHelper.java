@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
-	private static final String TAG = "BB_DB";
 	private static final int DB_VERSION = 1;
 	private static final String DB_NAME = "botbrew";
 	public static final String ID = "_id";
@@ -29,7 +28,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
 	}
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		Log.w(TAG,"Upgrading database. Existing contents will be lost. ["+oldVersion+"]->["+newVersion+"]");
+		Log.w(BotBrewApp.TAG,"Upgrading database. Existing contents will be lost. ["+oldVersion+"]->["+newVersion+"]");
 		db.execSQL("DROP TABLE IF EXISTS "+T_PACKAGECACHE);
 		db.execSQL("DROP TABLE IF EXISTS "+T_PACKAGECACHEFTS);
 		onCreate(db);

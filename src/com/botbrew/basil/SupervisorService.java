@@ -14,7 +14,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class SupervisorService extends Service {
-	private static final String TAG = "BotBrew";
 	public class LocalBinder extends Binder {
 		public SupervisorService getService() {
 			return SupervisorService.this;
@@ -28,10 +27,10 @@ public class SupervisorService extends Service {
 		@Override
 		public void run() {
 			if(!((BotBrewApp)getApplicationContext()).isInstalled(BotBrewApp.root)) {
-				Log.v(TAG,"cannot start supervisor");
+				Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): cannot start supervisor");
 				return;
 			}
-			Log.v(TAG,"supervisor started");
+			Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): supervisor started");
 			Shell.Pipe sh = null;
 			try {
 				sh = Shell.Pipe.getRootShell();
@@ -48,7 +47,7 @@ public class SupervisorService extends Service {
 						p.exitValue();
 					} catch(IllegalThreadStateException ex0) {
 						try {	// the process exists, so send SIGHUP
-							Log.v(TAG,"sending SIGHUP to runsvdir...");
+							Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): sending SIGHUP to runsvdir...");
 							Field f = p.getClass().getDeclaredField("id");
 							f.setAccessible(true);
 							f.get(p);
@@ -60,19 +59,19 @@ public class SupervisorService extends Service {
 								exited = false;
 							}
 						} catch(NoSuchFieldException ex1) {
-							Log.v(TAG,"NoSuchFieldException");
+							Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): NoSuchFieldException");
 						} catch(IllegalAccessException ex1) {
-							Log.v(TAG,"IllegalAccessException");
+							Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): IllegalAccessException");
 						} catch(IOException ex1) {
-							Log.v(TAG,"IOException");
+							Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): IOException");
 						} catch(InterruptedException ex1) {
-							Log.v(TAG,"InterruptedException");
+							Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): InterruptedException");
 						}
 					}
 				}
 				if(exited) {	// the process does not exist, so clean up offline
 					try {
-						Log.v(TAG,"sending SIGTERM to runsv...");
+						Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): sending SIGTERM to runsv...");
 						sh = Shell.Pipe.getRootShell();
 						sh.botbrew(BotBrewApp.root.getAbsolutePath());
 						final OutputStream p_stdin = sh.stdin();
@@ -86,7 +85,7 @@ public class SupervisorService extends Service {
 					} catch(InterruptedException ex) {
 					} finally {
 						stopSelfResult(startId);
-						Log.v(TAG,"supervisor stopped");
+						Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): supervisor stopped");
 					}
 				}
 			}
