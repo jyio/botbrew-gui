@@ -34,7 +34,7 @@ public class SupervisorService extends Service {
 			Shell.Pipe sh = null;
 			try {
 				sh = Shell.Pipe.getRootShell();
-				sh.botbrew(BotBrewApp.root.getAbsolutePath(),"runsvdir -P /etc/sv/enabled 'log: ................................................................................................................................................................................................................................................................'");
+				sh.botbrew(BotBrewApp.root.getAbsolutePath(),"runsvdir -P /etc/service 'log: ................................................................................................................................................................................................................................................................'");
 				sh.stdin().close();
 				sh.waitFor();
 			} catch(IOException ex) {
@@ -72,14 +72,12 @@ public class SupervisorService extends Service {
 				if(exited) {	// the process does not exist, so clean up offline
 					try {
 						Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): sending SIGTERM to runsv...");
+						final String bbroot = BotBrewApp.root.getAbsolutePath();
 						sh = Shell.Pipe.getRootShell();
-						sh.botbrew(BotBrewApp.root.getAbsolutePath());
-						final OutputStream p_stdin = sh.stdin();
-						p_stdin.write("killall -1 runsvdir || true\nkillall -15 runsv || true\n".getBytes());
-						String[] enabled = (new File("/etc/sv/enabled")).list();
-						if(enabled != null) for(String filename: enabled) p_stdin.write(("sv exit "+filename+" || true\n").getBytes());
-						p_stdin.flush();
-						p_stdin.close();
+						sh.botbrew(false,bbroot,"killall -1 runsvdir || true\nkillall -15 runsv || true");
+						String[] enabled = (new File(BotBrewApp.root,"etc/service")).list();
+						if(enabled != null) for(String filename: enabled) sh.botbrew(false,bbroot,"sv exit "+filename+" || true");
+						sh.stdin().close();
 						sh.waitFor();
 					} catch(IOException ex) {
 					} catch(InterruptedException ex) {

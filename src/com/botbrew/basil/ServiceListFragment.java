@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -65,14 +66,17 @@ class ServiceListEntry implements Comparable {
 			Shell.Pipe sh;
 			String line;
 			String name;
-			String[] svcs = (new File("/etc/sv/enabled")).list();
-			if(svcs != null) {
+			String[] svcs = (new File(BotBrewApp.root,"etc/service")).list();
+			if((svcs != null)&&(svcs.length > 0)) {
 				try {
+					final StringBuffer sb = new StringBuffer("sv status");
+					for(String svc: svcs) {
+						sb.append(" ");
+						sb.append(svc);
+					}
 					sh = Shell.Pipe.getRootShell();
-					sh.botbrew(BotBrewApp.root.getAbsolutePath());
-					final OutputStream p_stdin = sh.stdin();
-					for(String svc: svcs) p_stdin.write(("sv status "+svc+" || true\n").getBytes());
-					p_stdin.close();
+					sh.botbrew(BotBrewApp.root.getAbsolutePath(),sb.toString());
+					sh.stdin().close();
 					final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(sh.stdout()));
 					while((line = p_stdout.readLine()) != null) {
 						matcher = re_status.matcher(line);
@@ -89,7 +93,7 @@ class ServiceListEntry implements Comparable {
 				} catch(InterruptedException ex) {
 				}
 			}
-			svcs = (new File("/etc/sv")).list();
+			svcs = (new File(BotBrewApp.root,"etc/sv")).list();
 			if(svcs != null) {
 				String d_status = "off";
 				String d_detail = "this service is disabled";

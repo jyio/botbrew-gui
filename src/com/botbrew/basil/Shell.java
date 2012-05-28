@@ -94,13 +94,17 @@ public abstract class Shell {
 		in.flush();
 		return this;
 	}
-	public Shell botbrew(final CharSequence root) throws IOException {
+	/*public Shell botbrew(final CharSequence root) throws IOException {
 		in.write(("exec "+root+"/init -- "+usershell+"\n").getBytes());
 		in.flush();
 		return this;
-	}
+	}*/
 	public Shell botbrew(final CharSequence root, final CharSequence cmd) throws IOException {
-		in.write(("exec "+root+"/init -- "+cmd+"\n").getBytes());
+		return botbrew(true,root,cmd);
+	}
+	public Shell botbrew(final boolean exec, final CharSequence root, final CharSequence cmd) throws IOException {
+		if(exec) in.write(("exec "+root+"/init -- "+cmd+"\n").getBytes());
+		else in.write((root+"/init -- "+cmd+"\n").getBytes());
 		in.flush();
 		return this;
 	}
