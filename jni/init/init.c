@@ -54,7 +54,9 @@ static void usage(char *progname) {
 		"Usage: %s [options] [--] [<command>...]\n"
 		"\n"
 		"Available options:\n"
-		"\t-d <directory>\t| --dir=<directory>\tSpecify chroot directory\n",
+		"\t-d <directory>\t| --dir=<directory>\tSpecify chroot directory\n"
+		"\t-r\t\t| --remount\t\tRemount chroot directory\n"
+		"\t-u\t\t| --unmount\t\tUnmount chroot directory and exit\n",
 	progname);
 	exit(EXIT_FAILURE);
 }
@@ -77,6 +79,52 @@ static void privdrop(void) {
 static pid_t child_pid = 0;
 static void sighandler(int signo) {
 	if(child_pid != 0) kill(child_pid,signo);
+}
+
+static char *strconcat(char *a, char *b) {
+	size_t len_a = strlen(a);
+	size_t len_b = strlen(b);
+	char *res = malloc(len_a+len_b+1);
+	memcpy(res,a,len_a);
+	memcpy(res+len_a,b,len_b+1);	// includes null terminator
+	return res;
+}
+
+static void mount_setup(char *target) {
+	mount(target,target,NULL,MS_BIND,NULL);
+	mount(target,target,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME,NULL);
+	char *fs = strconcat(target,"/etc");
+	char *fs_dst = strconcat(target,"/botbrew/etc");
+	mkdir(fs_dst,0755);
+	mount(fs,fs_dst,NULL,MS_BIND,NULL);
+	free(fs_dst);
+	free(fs);
+	fs = strconcat(target,"/run");
+	mount(NULL,fs,"tmpfs",0,"size=10%,mode=0755");
+	fs_dst = strconcat(target,"/botbrew/run");
+	mkdir(fs_dst,0755);
+	mount(fs,fs_dst,NULL,MS_BIND,NULL);
+	free(fs_dst);
+	free(fs);
+	fs = strconcat(target,"/run/tmp");
+	mkdir(fs,0755);
+	free(fs);
+	fs = strconcat(target,"/run/lock");
+	mkdir(fs,0755);
+	free(fs);
+}
+
+static void mount_teardown(char *target) {
+	char *fs = strconcat(target,"/botbrew/etc");
+	umount2(fs,MNT_DETACH);
+	free(fs);
+	fs = strconcat(target,"/botbrew/run");
+	umount2(fs,MNT_DETACH);
+	free(fs);
+	fs = strconcat(target,"/run");
+	umount2(fs,MNT_DETACH);
+	free(fs);
+	umount2(target,MNT_DETACH);
 }
 
 static int main_clone(struct config *config) {
@@ -155,6 +203,8 @@ int main(int argc, char *argv[]) {
 	struct config config;
 	struct stat st;
 	char apath[PATH_MAX];
+	int remount = 0;
+	int unmount = 0;
 	// get absolute path
 	config.target = realpath(dirname(argv[0]),apath);
 	uid_t uid = getuid();
@@ -162,10 +212,12 @@ int main(int argc, char *argv[]) {
 	while(1) {
 		static struct option long_options[] = {
 			{"dir",required_argument,0,'d'},
+			{"remount",no_argument,0,'r'},
+			{"unmount",no_argument,0,'u'},
 			{0,0,0,0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc,argv,"d:",long_options,&option_index);
+		c = getopt_long(argc,argv,"d:ru",long_options,&option_index);
 		if(c == -1) break;
 		switch(c) {
 			case 'd':
@@ -175,6 +227,11 @@ int main(int argc, char *argv[]) {
 					return EXIT_FAILURE;
 				}
 				config.target = realpath(optarg,apath);
+				break;
+			case 'r':
+				remount = 1;
+			case 'u':
+				unmount = 1;
 				break;
 			default:
 				usage(argv[0]);
@@ -199,6 +256,11 @@ int main(int argc, char *argv[]) {
 	}
 	if((st.st_uid)||(st.st_gid)) chown(config.target,0,0);
 	if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)) chmod(config.target,0755);
+	// check if directory needs to be unmounted
+	if(unmount) {
+		mount_teardown(config.target);
+		if(!remount) return EXIT_SUCCESS;
+	}
 	// check if directory mounted
 	FILE *fp;
 	char *haystack;
@@ -218,8 +280,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr,"whoops: superuser privileges required for first invocation of `%s'\n",argv[0]);
 			return EXIT_FAILURE;
 		}
-		mount(config.target,config.target,NULL,MS_BIND,NULL);
-		mount(config.target,config.target,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME,NULL);
+		mount_setup(config.target);
 		if(!stat(argv[0],&st)) {
 			// setuid
 			if((st.st_uid)||(st.st_gid)) chown(argv[0],0,0);
