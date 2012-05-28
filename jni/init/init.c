@@ -119,10 +119,10 @@ static void mount_setup(char *target) {
 	free(fs_dst);
 	free(fs);
 	fs = strconcat(target,"/run/tmp");
-	mkdir(fs,0755);
+	mkdir(fs,01777);
 	free(fs);
 	fs = strconcat(target,"/run/lock");
-	mkdir(fs,0755);
+	mkdir(fs,01777);
 	free(fs);
 }
 
