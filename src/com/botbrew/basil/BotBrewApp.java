@@ -36,7 +36,7 @@ public class BotBrewApp extends Application {
 	public boolean isInstalled(final File path) {
 		if(!path.isDirectory()) return false;
 		final File path_init = new File(path,"init");
-		if(path_init.isFile()) return checkInstall(path_init);
+		if(path_init.isFile()) return checkInstall(path_init,false);
 		final File path_img = new File(path,"fs.img");
 		final File path_busybox = (new File(getCacheDir(),"busybox"));
 		final File path_busybox_src = new File(path,"busybox");
@@ -71,7 +71,7 @@ public class BotBrewApp extends Application {
 			p_stdin.close();
 			sinkError(p);
 			if(p.waitFor() != 0) return false;
-			if((path_init.isFile())&&(checkInstall(path_init))) {
+			if((path_init.isFile())&&(checkInstall(path_init,true))) {
 				unmount = false;
 				return true;
 			}
@@ -94,12 +94,13 @@ public class BotBrewApp extends Application {
 		}
 		return false;
 	}
-	public boolean checkInstall(final File path_init) {
+	public boolean checkInstall(final File path_init, final boolean remount) {
 		if(!path_init.isFile()) return false;
 		try {
 			Process p = Runtime.getRuntime().exec(new String[] {rootshell});
 			OutputStream p_stdin = p.getOutputStream();
-			p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
+			if(remount) p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' --remount -- /system/bin/sh -c ''").getBytes());
+			else p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
 			p_stdin.close();
 			sinkError(p);
 			if(p.waitFor() == 0) return true;

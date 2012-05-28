@@ -99,6 +99,18 @@ static void mount_setup(char *target) {
 	mount(fs,fs_dst,NULL,MS_BIND,NULL);
 	free(fs_dst);
 	free(fs);
+	fs = strconcat(target,"/home");
+	fs_dst = strconcat(target,"/botbrew/home");
+	mkdir(fs_dst,0755);
+	mount(fs,fs_dst,NULL,MS_BIND,NULL);
+	free(fs_dst);
+	free(fs);
+	fs = strconcat(target,"/root");
+	fs_dst = strconcat(target,"/botbrew/root");
+	mkdir(fs_dst,0755);
+	mount(fs,fs_dst,NULL,MS_BIND,NULL);
+	free(fs_dst);
+	free(fs);
 	fs = strconcat(target,"/run");
 	mount(NULL,fs,"tmpfs",0,"size=10%,mode=0755");
 	fs_dst = strconcat(target,"/botbrew/run");
@@ -116,6 +128,12 @@ static void mount_setup(char *target) {
 
 static void mount_teardown(char *target) {
 	char *fs = strconcat(target,"/botbrew/etc");
+	umount2(fs,MNT_DETACH);
+	free(fs);
+	fs = strconcat(target,"/botbrew/home");
+	umount2(fs,MNT_DETACH);
+	free(fs);
+	fs = strconcat(target,"/botbrew/root");
 	umount2(fs,MNT_DETACH);
 	free(fs);
 	fs = strconcat(target,"/botbrew/run");
