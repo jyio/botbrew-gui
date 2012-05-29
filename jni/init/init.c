@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#include <sys/prctl.h>
 #include <sys/wait.h>
 
 #include "strnstr.h"
@@ -330,6 +331,10 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"whoops: cannot clone\n");
 		return EXIT_FAILURE;
 	} else {
+		char *pr_name = malloc(snprintf(NULL,0,"BotBrew(%d)",pid)+1);
+		sprintf(pr_name,"BotBrew(%d)",pid);
+		prctl(PR_SET_NAME,pr_name);
+		free(pr_name);
 		struct sigaction act;
 		int ret;
 		privdrop();
