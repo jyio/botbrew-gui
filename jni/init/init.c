@@ -90,8 +90,8 @@ static char *strconcat(char *a, char *b) {
 	return res;
 }
 
-static void mount_setup(char *target) {
-	mount(target,target,NULL,MS_BIND,NULL);
+static void mount_setup(char *target, int selfmount) {
+	if(selfmount) mount(target,target,NULL,MS_BIND,NULL);
 	mount(target,target,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME,NULL);
 	char *fs = strconcat(target,"/etc");
 	char *fs_dst = strconcat(target,"/botbrew/etc");
@@ -126,7 +126,7 @@ static void mount_setup(char *target) {
 	free(fs);
 }
 
-static void mount_teardown(char *target) {
+static void mount_teardown(char *target, int selfmount) {
 	char *fs = strconcat(target,"/botbrew/etc");
 	umount2(fs,MNT_DETACH);
 	free(fs);
@@ -142,7 +142,7 @@ static void mount_teardown(char *target) {
 	fs = strconcat(target,"/run");
 	umount2(fs,MNT_DETACH);
 	free(fs);
-	umount2(target,MNT_DETACH);
+	if(selfmount) umount2(target,MNT_DETACH);
 }
 
 static int main_clone(struct config *config) {
@@ -274,11 +274,6 @@ int main(int argc, char *argv[]) {
 	}
 	if((st.st_uid)||(st.st_gid)) chown(config.target,0,0);
 	if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)) chmod(config.target,0755);
-	// check if directory needs to be unmounted
-	if(unmount) {
-		mount_teardown(config.target);
-		if(!remount) return EXIT_SUCCESS;
-	}
 	// check if directory mounted
 	FILE *fp;
 	char *haystack;
@@ -288,17 +283,35 @@ int main(int argc, char *argv[]) {
 	needle[0] = needle[target_len+1] = ' ';
 	memcpy(needle+1,config.target,target_len+1);	// includes null terminator
 	int mounted = 0;
+	int loopmounted = 0;
 	if(fp = fopen("/proc/self/mounts","r")) while(haystack = fgetln(fp,&len)) if(strnstr(haystack,needle,len)) {
-		mounted = 1;
+		if(strncmp(haystack,"/dev/block/loop",sizeof("/dev/block/loop")-1) == 0) loopmounted = 1;
+		fclose(fp);
+		if(loopmounted) {
+			char *needle2 = malloc(snprintf(NULL,0," %s/run ",config.target)+1);
+			sprintf(needle2," %s/run ",config.target);
+			if(fp = fopen("/proc/self/mounts","r")) while(haystack = fgetln(fp,&len)) if(strnstr(haystack,needle2,len)) {
+				mounted = 1;
+				break;
+			}
+			fclose(fp);
+			free(needle2);
+		} else mounted = 1;
 		break;
 	}
 	free(needle);
+	// check if directory needs to be unmounted
+	if(unmount) {
+		mount_teardown(config.target,!loopmounted);
+		mounted = 0;
+		if(!remount) return EXIT_SUCCESS;
+	}
 	if(!mounted) {
 		if(geteuid()) {
 			fprintf(stderr,"whoops: superuser privileges required for first invocation of `%s'\n",argv[0]);
 			return EXIT_FAILURE;
 		}
-		mount_setup(config.target);
+		mount_setup(config.target,!loopmounted);
 		if(!stat(argv[0],&st)) {
 			// setuid
 			if((st.st_uid)||(st.st_gid)) chown(argv[0],0,0);
