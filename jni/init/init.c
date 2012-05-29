@@ -287,6 +287,7 @@ int main(int argc, char *argv[]) {
 	int loopmounted = 0;
 	if(fp = fopen("/proc/self/mounts","r")) while(haystack = fgetln(fp,&len)) if(strnstr(haystack,needle,len)) {
 		if(strncmp(haystack,"/dev/block/loop",sizeof("/dev/block/loop")-1) == 0) loopmounted = 1;
+		else if(strncmp(haystack,"/dev/loop",sizeof("/dev/loop")-1) == 0) loopmounted = 1;
 		fclose(fp);
 		if(loopmounted) {
 			char *needle2 = malloc(snprintf(NULL,0," %s/run ",config.target)+1);
