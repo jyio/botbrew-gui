@@ -10,6 +10,8 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -63,7 +65,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 		try {
 			mFDstdin.write(("set -e\n").getBytes());
 			mFDstdin.write(("chmod 0755 '"+cmd+"'\n").getBytes());
-			mFDstdin.write(("mkdir -p '"+file+"'\n").getBytes());
+			for(String mkdir: mkdir_p(new File(file))) mFDstdin.write(("mkdir '"+mkdir+"'\n").getBytes());
 			mFDstdin.write(("cd '"+file+"'\n").getBytes());
 			mFDstdin.write(("'"+cmd+"' -n\n").getBytes());
 			mFDstdin.write(("rm '"+cmd+"'\n").getBytes());
@@ -116,5 +118,13 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 	@Override
 	public void onBackPressed() {
 		if(!mLocked) super.onBackPressed();
+	}
+	public static List<String> mkdir_p(final File path) {
+		if(path.exists()) return new ArrayList<String>();
+		else {
+			final List<String> paths = mkdir_p(path.getParentFile());
+			paths.add(path.getAbsolutePath());
+			return paths;
+		}
 	}
 }
