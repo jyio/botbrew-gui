@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:text="You have selected the following package for installation:" />
+	<TextView
+		android:id="@+id/path"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:typeface="monospace"
+		android:textAppearance="?android:attr/textAppearanceLarge" />
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="If this package has any dependencies, I would help you install those, too. Are you sure you want to continue?" />
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_vertical">
+		<Button
+			android:id="@+id/cancel"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:text="Cancel" />
+		<Button
+			android:id="@+id/proceed"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:text="OK" />
+	</LinearLayout>
+</LinearLayout>

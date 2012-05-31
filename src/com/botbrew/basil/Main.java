@@ -146,7 +146,7 @@ public class Main extends SherlockFragmentActivity {
 					startActivity((new Intent(this,PackageStatusActivity.class)).putExtra("package",path.get(path.size()-1)));
 				} else {	// maybe android.intent.category.BROWSABLE
 				//	verifyChecksum();
-				//	OpkgService.requestOpkgInstallURL(this,data);
+					if((new File(data.getPath())).exists()) DebInstallDialogFragment.create(data).show(getSupportFragmentManager(),null);
 				}
 			}
 		} else if(Intent.ACTION_SEARCH.equals(action)) {

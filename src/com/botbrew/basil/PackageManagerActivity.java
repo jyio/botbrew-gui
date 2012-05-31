@@ -34,6 +34,44 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		void onSuccess();
 		void onFail();
 	}
+	private class DebProxy implements ProcessProxy {
+		private String root;
+		private DebianPackageManager dpm;
+		private String pkg;
+		private int mPID;
+		@Override
+		public boolean setup(final String root, final DebianPackageManager dpm) {
+			this.root = root;
+			this.dpm = dpm;
+			pkg = getIntent().getStringExtra("package");
+			return pkg != null;
+		}
+		@Override
+		public FileDescriptor getSubprocess() throws IOException {
+			int[] pid = new int[] {0};
+			FileDescriptor fd = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
+			mPID = pid[0];
+			FileOutputStream p_stdin = new FileOutputStream(fd);
+			p_stdin.write((root+"/init -- dpkg --install "+pkg+"\n").getBytes());
+			// TODO: cleanup
+			p_stdin.write(("exec "+root+"/init -- "+dpm.aptget_install("-f")+"\n").getBytes());
+			return fd;
+		}
+		@Override
+		public int waitFor() {
+			return Exec.waitFor(mPID);
+		}
+		@Override
+		public void hangupProcessGroup() {
+			Exec.hangupProcessGroup(mPID);
+		}
+		@Override
+		public void onSuccess() {
+		}
+		@Override
+		public void onFail() {
+		}
+	}
 	private class InstallProxy implements ProcessProxy {
 		private String root;
 		private DebianPackageManager dpm;
@@ -236,7 +274,8 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		dpm.config(pref);
 		final Intent intent = getIntent();
 		final String command = intent.getStringExtra("command");
-		if("install".equals(command)) mProxy = new InstallProxy();
+		if("installdeb".equals(command)) mProxy = new DebProxy();
+		else if("install".equals(command)) mProxy = new InstallProxy();
 		else if("reinstall".equals(command)) mProxy = new ReinstallProxy();
 		else if("remove".equals(command)) mProxy = new RemoveProxy();
 		else if("autoremove".equals(command)) mProxy = new AutoremoveProxy();
