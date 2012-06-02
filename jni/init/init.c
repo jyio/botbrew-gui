@@ -24,11 +24,11 @@ struct config {
 };
 
 struct mountspec {
-	char *src;
-	char *dst;
-	char *type;
+	const char *src;
+	const char *dst;
+	const char *type;
 	unsigned long flags;
-	void *data;
+	const void *data;
 	unsigned long remount_flags;
 };
 
@@ -82,10 +82,10 @@ static void sighandler(int signo) {
 	if(child_pid != 0) kill(child_pid,signo);
 }
 
-static char *strconcat(char *a, char *b) {
+static char *strconcat(const char *a, const char *b) {
 	size_t len_a = strlen(a);
 	size_t len_b = strlen(b);
-	char *res = malloc(len_a+len_b+1);
+	char *res = (char*)malloc(len_a+len_b+1);
 	memcpy(res,a,len_a);
 	memcpy(res+len_a,b,len_b+1);	// includes null terminator
 	return res;
@@ -165,8 +165,6 @@ static void mount_teardown(char *target, int selfmount) {
 }
 
 static int main_clone(struct config *config) {
-	char *initsh = alloca(snprintf(NULL,0,"%s/init.sh",config->target)+1);
-	sprintf(initsh,"%s/init.sh",config->target);
 	char cwd[PATH_MAX];
 	if(getcwd(cwd,sizeof(cwd)) == NULL) {
 		fprintf(stderr,"whoops: cannot get working directory\n");
@@ -183,7 +181,7 @@ static int main_clone(struct config *config) {
 		struct mountspec m = foreign_mounts[i];
 		if((m.src)&&(stat(m.src,&st) != 0)) continue;
 		size_t dst_len = strlen(m.dst);
-		char *dst = malloc(target_len+dst_len+1);
+		char *dst = (char*)malloc(target_len+dst_len+1);
 		memcpy(dst,config->target,target_len);
 		memcpy(dst+target_len,m.dst,dst_len+1);	// includes null terminator
 		mkdir(dst,0755);
@@ -203,7 +201,7 @@ static int main_clone(struct config *config) {
 	char *env_path = getenv("PATH");
 	if((env_path)&&(env_path[0])) {
 		size_t env_path_len = strlen(env_path);
-		char *newpath = malloc(sizeof(ENV_PATH)+env_path_len);
+		char *newpath = (char*)malloc(sizeof(ENV_PATH)+env_path_len);
 		char *append = strstr(env_path,"::");
 		if(append) {	// break string at :: and insert
 			append++;
@@ -221,7 +219,7 @@ static int main_clone(struct config *config) {
 	unsetenv("LD_LIBRARY_PATH");
 	setenv("BOTBREW_PREFIX",config->target,1);
 	if(config->argv == NULL) {
-		char *argv0[2];
+		const char *argv0[2];
 		argv0[0] = "/init.sh";
 		argv0[1] = 0;
 		config->argv = (char**)&argv0;
@@ -298,7 +296,7 @@ int main(int argc, char *argv[]) {
 	char *haystack;
 	size_t len;
 	size_t target_len = strlen(config.target);
-	char *needle = malloc(target_len+3);
+	char *needle = (char*)malloc(target_len+3);
 	needle[0] = needle[target_len+1] = ' ';
 	memcpy(needle+1,config.target,target_len+1);	// includes null terminator
 	int mounted = 0;
@@ -308,7 +306,7 @@ int main(int argc, char *argv[]) {
 		else if(strncmp(haystack,"/dev/loop",sizeof("/dev/loop")-1) == 0) loopmounted = 1;
 		fclose(fp);
 		if(loopmounted) {
-			char *needle2 = malloc(snprintf(NULL,0," %s/run ",config.target)+1);
+			char *needle2 = (char*)malloc(snprintf(NULL,0," %s/run ",config.target)+1);
 			sprintf(needle2," %s/run ",config.target);
 			if(fp = fopen("/proc/self/mounts","r")) while(haystack = fgetln(fp,&len)) if(strnstr(haystack,needle2,len)) {
 				mounted = 1;
@@ -340,17 +338,17 @@ int main(int argc, char *argv[]) {
 	}
 	// clone with new namespace
 	long stacksz = sysconf(_SC_PAGESIZE);
-	void *stack = alloca(stacksz)+stacksz;
+	void *stack = (char*)alloca(stacksz)+stacksz;
 #ifdef __i386__
 	pid_t pid = __sys_clone(main_clone,stack,SIGCHLD|CLONE_NEWNS|CLONE_FILES,(void*)&config);
 #else
-	pid_t pid = clone(main_clone,stack,SIGCHLD|CLONE_NEWNS|CLONE_FILES,(void*)&config);
+	pid_t pid = clone((int (*)(void*))main_clone,stack,SIGCHLD|CLONE_NEWNS|CLONE_FILES,(void*)&config);
 #endif
 	if(pid < 0) {
 		fprintf(stderr,"whoops: cannot clone\n");
 		return EXIT_FAILURE;
 	} else {
-		char *pr_name = malloc(snprintf(NULL,0,"BotBrew(%d)",pid)+1);
+		char *pr_name = (char*)malloc(snprintf(NULL,0,"BotBrew(%d)",pid)+1);
 		sprintf(pr_name,"BotBrew(%d)",pid);
 		prctl(PR_SET_NAME,pr_name);
 		free(pr_name);
