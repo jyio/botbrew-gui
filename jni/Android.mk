@@ -23,6 +23,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/init
 LOCAL_MODULE:= init
 LOCAL_SRC_FILES:= \
   init/init.c \
-  init/strnstr.c
+  init/strnstr.c \
+  init/mntent.c
 LOCAL_LDLIBS :=
 include $(BUILD_EXECUTABLE)

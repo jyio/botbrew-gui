@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sched.h>
 #include <errno.h>
+#include <mntent.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/types.h>
@@ -293,32 +294,35 @@ int main(int argc, char *argv[]) {
 	if((st.st_uid)||(st.st_gid)) chown(config.target,0,0);
 	if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)) chmod(config.target,0755);
 	// check if directory mounted
-	FILE *fp;
-	char *haystack;
-	size_t len;
-	size_t target_len = strlen(config.target);
-	char *needle = (char*)malloc(target_len+3);
-	needle[0] = needle[target_len+1] = ' ';
-	memcpy(needle+1,config.target,target_len+1);	// includes null terminator
 	int mounted = 0;
 	int loopmounted = 0;
-	if(fp = fopen("/proc/self/mounts","r")) while(haystack = fgetln(fp,&len)) if(strnstr(haystack,needle,len)) {
-		if(strncmp(haystack,"/dev/block/loop",sizeof("/dev/block/loop")-1) == 0) loopmounted = 1;
-		else if(strncmp(haystack,"/dev/loop",sizeof("/dev/loop")-1) == 0) loopmounted = 1;
-		fclose(fp);
-		if(loopmounted) {
-			char *needle2 = (char*)malloc(snprintf(NULL,0," %s/run ",config.target)+1);
-			sprintf(needle2," %s/run ",config.target);
-			if(fp = fopen("/proc/self/mounts","r")) while(haystack = fgetln(fp,&len)) if(strnstr(haystack,needle2,len)) {
-				mounted = 1;
-				break;
-			}
-			fclose(fp);
-			free(needle2);
-		} else mounted = 1;
-		break;
+	FILE *fp1;
+	if(fp1 = fopen("/proc/self/mounts","r")) {
+		char *mntpt = config.target;
+		struct mntent *mnt;
+		while(mnt = getmntent(fp1)) {
+			if(strcmp(mnt->mnt_dir,mntpt) != 0) continue;
+			if(
+				(strncmp(mnt->mnt_fsname,"/dev/block/loop",sizeof("/dev/block/loop")-1) == 0)||
+				(strncmp(mnt->mnt_fsname,"/dev/loop",sizeof("/dev/loop")-1) == 0)
+			) {
+				loopmounted = 1;
+				FILE *fp2;
+				if(fp2 = fopen("/proc/self/mounts","r")) {
+					char *mntpt_run = (char*)malloc(snprintf(NULL,0,"%s/run",mntpt)+1);
+					sprintf(mntpt_run,"%s/run",mntpt);
+					while(mnt = getmntent(fp2)) if(strcmp(mnt->mnt_dir,mntpt_run) == 0) {
+						mounted = 1;
+						break;
+					}
+					fclose(fp2);
+					free(mntpt_run);
+				}
+			} else mounted = 1;
+			break;
+		}
+		fclose(fp1);
 	}
-	free(needle);
 	// check if directory needs to be unmounted
 	if(unmount) {
 		mount_teardown(config.target,!loopmounted);
