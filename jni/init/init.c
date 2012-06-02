@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#include <sys/syscall.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
 
@@ -340,7 +341,8 @@ int main(int argc, char *argv[]) {
 	long stacksz = sysconf(_SC_PAGESIZE);
 	void *stack = (char*)alloca(stacksz)+stacksz;
 #ifdef __i386__
-	pid_t pid = __sys_clone(main_clone,stack,SIGCHLD|CLONE_NEWNS|CLONE_FILES,(void*)&config);
+	pid_t pid = syscall(__NR_clone,SIGCHLD|CLONE_NEWNS|CLONE_FILES,stack);
+	if(pid == 0) return main_clone(&config);
 #else
 	pid_t pid = clone((int (*)(void*))main_clone,stack,SIGCHLD|CLONE_NEWNS|CLONE_FILES,(void*)&config);
 #endif
