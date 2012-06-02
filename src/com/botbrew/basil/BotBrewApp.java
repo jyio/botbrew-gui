@@ -36,74 +36,49 @@ public class BotBrewApp extends Application {
 	public boolean isInstalled(final File path) {
 		if(!path.isDirectory()) return false;
 		final File path_init = new File(path,"init");
-		if(path_init.isFile()) return checkInstall(path_init,false);
+		if(path_init.isFile()) return checkInstall(path,false);
 		final File path_img = new File(path,"fs.img");
-		final File path_busybox = (new File(getCacheDir(),"busybox"));
-		final File path_busybox_src = new File(path,"busybox");
-		Process p;
-		OutputStream p_stdin;
-		boolean unmount = false;
-		try {
-			if(path_img.isFile()) {
-				boolean busyboxcopy = false;
-				if(!path_busybox.isFile()) {
-					if(path_busybox_src.isFile()) busyboxcopy = true;
-					else return false;
-				}
-				p = Runtime.getRuntime().exec(new String[] {rootshell});
-				p_stdin = p.getOutputStream();
-				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
-				if(busyboxcopy) {
-					p_stdin.write(("cp '"+path_busybox_src+"' '"+path_busybox+"'\n").getBytes());
-					p_stdin.write(("chmod 0755 '"+path_busybox+"'\n").getBytes());
-				}
-				p_stdin.write(("busybox mount -o loop '"+path_img+"' '"+path+"'").getBytes());
-				p_stdin.close();
-				sinkError(p);
-				if(p.waitFor() != 0) return false;
-				unmount = true;
-			}
-			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
-			p = Runtime.getRuntime().exec(new String[] {rootshell});
-			p_stdin = p.getOutputStream();
-			p_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
-			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
-			p_stdin.close();
-			sinkError(p);
-			if(p.waitFor() != 0) return false;
-			if((path_init.isFile())&&(checkInstall(path_init,true))) {
-				unmount = false;
-				return true;
-			}
-		} catch(IOException ex) {
-			Log.v(TAG,"IOException");
-		} catch(InterruptedException ex) {
-			Log.v(TAG,"InterruptedException");
-		} finally {
-			if(unmount) try {
-				p = Runtime.getRuntime().exec(new String[] {rootshell});
-				p_stdin = p.getOutputStream();
-				p_stdin.write(("export PATH="+getCacheDir()+":${PATH}\n").getBytes());
-				p_stdin.write(("busybox umount '"+path+"'").getBytes());
-				p_stdin.close();
-				sinkError(p);
-				if(p.waitFor() != 0) return false;
-			} catch(IOException ex) {
-			} catch(InterruptedException ex) {
-			}
-		}
+		if(path_img.isFile()) return checkInstall(path,true);
 		return false;
 	}
-	public boolean checkInstall(final File path_init, final boolean remount) {
-		if(!path_init.isFile()) return false;
+	public boolean checkInstall(final File path, final boolean remount) {
+		if(!path.isDirectory()) return false;
+		final File path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so"));
+		final File path_init = new File(path,"init");
+		final File path_img = new File(path,"fs.img");
+		Process p;
+		OutputStream p_stdin;
 		try {
-			Process p = Runtime.getRuntime().exec(new String[] {rootshell});
-			OutputStream p_stdin = p.getOutputStream();
-			if(remount) p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' --remount -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'").getBytes());
+			if((remount)||(!path_init.isFile())) {
+				p = Runtime.getRuntime().exec(new String[] {rootshell});
+				p_stdin = p.getOutputStream();
+				p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' --unmount").getBytes());
+				p_stdin.close();
+				sinkError(p);
+				if(p.waitFor() != 0) return false;
+				if(path_init.isFile()) {
+					p = Runtime.getRuntime().exec(new String[] {rootshell});
+					p_stdin = p.getOutputStream();
+					p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
+					p_stdin.close();
+					sinkError(p);
+					return p.waitFor() == 0;
+				} else if(path_img.isFile()) {
+					p = Runtime.getRuntime().exec(new String[] {rootshell});
+					p_stdin = p.getOutputStream();
+					p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path_img.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
+					p_stdin.close();
+					sinkError(p);
+					return p.waitFor() == 0;
+				} else return false;
+			}
+			p = Runtime.getRuntime().exec(new String[] {rootshell});
+			p_stdin = p.getOutputStream();
+			if(remount) p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'").getBytes());
 			else p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
 			p_stdin.close();
 			sinkError(p);
-			if(p.waitFor() == 0) return true;
+			return p.waitFor() == 0;
 		} catch(IOException ex) {
 			Log.v(TAG,"IOException");
 		} catch(InterruptedException ex) {
@@ -112,6 +87,7 @@ public class BotBrewApp extends Application {
 		return false;
 	}
 	public boolean nativeInstall(final File path) {
+		if(needsLoopMount(path.getAbsolutePath())) return checkInstall(path,true);
 		try {
 			final Shell.Pipe sh = Shell.Pipe.getRootShell();
 			final OutputStream p_stdin = sh.stdin();
@@ -121,7 +97,7 @@ public class BotBrewApp extends Application {
 			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
 			p_stdin.close();
 			sinkError(sh.proc);
-			if(sh.waitFor() == 0) checkInstall(new File(path,"init"),true);
+			if(sh.waitFor() == 0) checkInstall(path,true);
 		} catch(IOException ex) {
 		} catch(InterruptedException ex) {
 		}

@@ -8,16 +8,19 @@
 #include <sched.h>
 #include <errno.h>
 #include <mntent.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
+#include <linux/loop.h>
 
 #include "strnstr.h"
 
 #define ENV_PATH	"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games:/botbrew/bin:/usr/lib/busybox"
+#define LOOP_MAX	4096
 
 struct config {
 	char *target;
@@ -57,7 +60,7 @@ static void usage(char *progname) {
 		"Usage: %s [options] [--] [<command>...]\n"
 		"\n"
 		"Available options:\n"
-		"\t-d <directory>\t| --dir=<directory>\tSpecify chroot directory\n"
+		"\t-t <target>\t| --target=<target>\tSpecify chroot directory or image\n"
 		"\t-r\t\t| --remount\t\tRemount chroot directory\n"
 		"\t-u\t\t| --unmount\t\tUnmount chroot directory and exit\n",
 	progname);
@@ -93,8 +96,86 @@ static char *strconcat(const char *a, const char *b) {
 	return res;
 }
 
-static void mount_setup(char *target, int selfmount) {
-	if(selfmount) mount(target,target,NULL,MS_BIND,NULL);
+static char *loopdev_get(const char *filepath) {
+	char *devpath = (char*)malloc(PATH_MAX);
+	struct loop_info64 loopinfo;
+	mode_t mode = 0660 | S_IFBLK;
+	int devfd = -1;
+	int success = 0;
+	int i;
+	for(i = 0; i < LOOP_MAX; i++) {
+		unsigned int dev = (0xff&i)|((i<<12)&0xfff00000)|(7<<8);
+		sprintf(devpath,"/dev/block/loop%d",i);
+		if((mknod(devpath,mode,dev) < 0)&&(errno != EEXIST)) break;
+		if((devfd = open(devpath,O_RDWR)) < 0) break;
+		if(ioctl(devfd,LOOP_GET_STATUS64,&loopinfo) < 0) {
+			if(errno == ENXIO) success = 1;
+			break;
+		}
+		close(devfd);
+	}
+	devpath = (char*)realloc(devpath,strlen(devpath)+1);
+	int filefd = -1;
+	if((filefd = open(filepath,O_RDWR)) < 0) {
+		close(devfd);
+		free(devpath);
+		return NULL;
+	}
+	if(ioctl(devfd,LOOP_SET_FD,filefd) < 0) {
+		close(filefd);
+		close(devfd);
+		free(devpath);
+		return NULL;
+	}
+	memset(&loopinfo,0,sizeof(loopinfo));
+	strlcpy((char*)loopinfo.lo_file_name,filepath,LO_NAME_SIZE);
+	if(ioctl(devfd,LOOP_SET_STATUS64,&loopinfo) < 0) {
+		close(filefd);
+		close(devfd);
+		free(devpath);
+		return NULL;
+	}
+	close(filefd);
+	close(devfd);
+	return devpath;
+}
+
+static int loopdev_del(const char *devpath) {
+	int devfd = open(devpath,O_RDONLY);
+	if(devfd < 0) return -1;
+	if(ioctl(devfd,LOOP_CLR_FD,0) < 0) {
+		close(devfd);
+		return -1;
+	}
+	close(devfd);
+	return 0;
+}
+
+static int loopdev_mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data) {
+	const char *devpath = loopdev_get(source);
+	if(!devpath) return -1;
+	int res = mount(devpath,target,filesystemtype,mountflags,data);
+	if(res) loopdev_del(devpath);
+	return res;
+}
+
+static int loopdev_umount2(const char *target, int flags) {
+	FILE *mntfp = fopen("/proc/self/mounts","r");
+	struct mntent *mntent;
+	while(mntent = getmntent(mntfp)) {
+		if(strcmp(mntent->mnt_dir,target) == 0) {
+			int res = umount2(target,flags);
+			loopdev_del(mntent->mnt_fsname);
+			fclose(mntfp);
+			return res;
+		}
+	}
+	fclose(mntfp);
+	return -1;
+}
+
+static void mount_setup(char *target, int loopdev) {
+	if(!loopdev) mount(target,target,NULL,MS_BIND,NULL);
 	mount(target,target,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME,NULL);
 	char *fs = strconcat(target,"/etc");
 	char *fs_dst = strconcat(target,"/botbrew/etc");
@@ -141,7 +222,7 @@ static void mount_setup(char *target, int selfmount) {
 	free(fs);
 }
 
-static void mount_teardown(char *target, int selfmount) {
+static void mount_teardown(char *target, int loopdev) {
 	char *fs = strconcat(target,"/botbrew/etc");
 	umount2(fs,MNT_DETACH);
 	free(fs);
@@ -163,7 +244,25 @@ static void mount_teardown(char *target, int selfmount) {
 	fs = strconcat(target,"/run");
 	umount2(fs,MNT_DETACH);
 	free(fs);
-	if(selfmount) umount2(target,MNT_DETACH);
+	if(loopdev) loopdev_umount2(target,MNT_DETACH);
+	else umount2(target,MNT_DETACH);
+}
+
+static int copy(char *source, char *dest) {
+	if((!source)||(!dest)) return -1;
+	int pid = fork();
+	if(pid < 0) return -1;
+	else if(pid == 0) execlp("cp","cp",source,dest,(char*)0);
+	else {
+		int status;
+		signal(SIGTTIN,SIG_IGN);
+		if(waitpid(pid,&status,WNOHANG) == 0) {
+			signal(SIGTTIN,SIG_DFL);
+			return status;
+		}
+		signal(SIGTTIN,SIG_DFL);
+		return -1;
+	}
 }
 
 static int main_clone(struct config *config) {
@@ -242,22 +341,26 @@ int main(int argc, char *argv[]) {
 	char apath[PATH_MAX];
 	int remount = 0;
 	int unmount = 0;
-	// get absolute path
-	config.target = realpath(dirname(argv[0]),apath);
+	char *loopmount = NULL;
+	char *self = argv[0];
 	uid_t uid = getuid();
+	// get absolute path
+	config.target = realpath(dirname(self),apath);
 	int c;
 	while(1) {
 		static struct option long_options[] = {
 			{"dir",required_argument,0,'d'},
+			{"target",required_argument,0,'t'},
 			{"remount",no_argument,0,'r'},
 			{"unmount",no_argument,0,'u'},
 			{0,0,0,0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc,argv,"d:ru",long_options,&option_index);
+		c = getopt_long(argc,argv,"d:t:ru",long_options,&option_index);
 		if(c == -1) break;
 		switch(c) {
 			case 'd':
+			case 't':
 				// prevent privilege escalation: only superuser can chroot to arbitrary directories
 				if(uid) {
 					fprintf(stderr,"whoops: --dir is only available for uid=0\n");
@@ -271,28 +374,40 @@ int main(int argc, char *argv[]) {
 				unmount = 1;
 				break;
 			default:
-				usage(argv[0]);
+				usage(self);
 		}
 	}
 	config.argv = (optind==argc)?NULL:(argv+optind);
 	// prevent privilege escalation: fail if link/symlink is not owned by superuser
 	if(uid) {
-		if(lstat(argv[0],&st)) {
-			fprintf(stderr,"whoops: cannot stat `%s'\n",argv[0]);
+		if(lstat(self,&st)) {
+			fprintf(stderr,"whoops: cannot stat `%s'\n",self);
 			return EXIT_FAILURE;
 		}
 		if(st.st_uid) {
-			fprintf(stderr,"whoops: `%s' is not owned by uid=0\n",argv[0]);
+			fprintf(stderr,"whoops: `%s' is not owned by uid=0\n",self);
 			return EXIT_FAILURE;
 		}
 	}
-	// check if directory exists
-	if((stat(config.target,&st))||(!S_ISDIR(st.st_mode))) {
-		fprintf(stderr,"whoops: `%s' is not a directory\n",config.target);
+	// check if target exists
+	if(stat(config.target,&st)) {
+		fprintf(stderr,"whoops: `%s' does not exist\n",config.target);
 		return EXIT_FAILURE;
 	}
-	if((st.st_uid)||(st.st_gid)) chown(config.target,0,0);
-	if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)) chmod(config.target,0755);
+	if(S_ISREG(st.st_mode)) {
+		loopmount = config.target;
+		config.target = (char*)malloc(PATH_MAX);
+		config.target = realpath(dirname(loopmount),config.target);
+		config.target = (char*)realloc(config.target,strlen(config.target)+1);
+		self = (char*)malloc(snprintf(NULL,0,"%s/init",config.target)+1);
+		sprintf(self,"%s/init",config.target);
+	} else if(!S_ISDIR(st.st_mode)) {
+		fprintf(stderr,"whoops: `%s' is not a directory\n",config.target);
+		return EXIT_FAILURE;
+	} else {
+		if((st.st_uid)||(st.st_gid)) chown(config.target,0,0);
+		if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)) chmod(config.target,0755);
+	}
 	// check if directory mounted
 	int mounted = 0;
 	int loopmounted = 0;
@@ -325,20 +440,37 @@ int main(int argc, char *argv[]) {
 	}
 	// check if directory needs to be unmounted
 	if(unmount) {
-		mount_teardown(config.target,!loopmounted);
-		mounted = 0;
-		if(!remount) return EXIT_SUCCESS;
+		if(geteuid()) {
+			fprintf(stderr,"whoops: superuser privileges required to unmount\n");
+			return EXIT_FAILURE;
+		}
+		mount_teardown(config.target,loopmounted);
+		if(remount) mounted = 0;
+		else return EXIT_SUCCESS;
 	}
 	if(!mounted) {
 		if(geteuid()) {
-			fprintf(stderr,"whoops: superuser privileges required for first invocation of `%s'\n",argv[0]);
+			fprintf(stderr,"whoops: superuser privileges required for first invocation of `%s'\n",self);
 			return EXIT_FAILURE;
 		}
-		mount_setup(config.target,!loopmounted);
-		if(!stat(argv[0],&st)) {
+		if(loopmount) {
+			if(loopdev_mount(loopmount,config.target,"ext4",0,NULL)) {
+				fprintf(stderr,"whoops: cannot mount `%s'\n",loopmount);
+				return EXIT_FAILURE;
+			}
+			if(strcmp(argv[0],self) != 0) {
+				time_t mtime = st.st_mtime;
+				if(!stat(self,&st)) {
+					if((!S_ISDIR(st.st_mode))&&(st.st_mtime < mtime)) copy(argv[0],self);
+				} else copy(argv[0],self);
+			}
+			loopmounted = 1;
+		}
+		mount_setup(config.target,loopmounted);
+		if(!stat(self,&st)) {
 			// setuid
-			if((st.st_uid)||(st.st_gid)) chown(argv[0],0,0);
-			if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)||!(st.st_mode&S_ISUID)) chmod(argv[0],04755);
+			if((st.st_uid)||(st.st_gid)) chown(self,0,0);
+			if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)||!(st.st_mode&S_ISUID)) chmod(self,04755);
 		}
 	}
 	// clone with new namespace

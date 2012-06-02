@@ -57,12 +57,8 @@ public class BootstrapReadyActivity extends SherlockFragmentActivity {
 				final String file = (String)vLocation.getSelectedItem();
 				if(!STR_CUSTOM.equals(file)) {
 					final boolean loop = BotBrewApp.needsLoopMount(file);
-					boolean rebase = false;
-					if(loop) {
-						if((new File(new File(file),"fs.img")).exists()) rebase = true;
-					} else {
-						if((new File(new File(file),"botbrew")).exists()) rebase = true;
-					}
+					boolean rebase = (new File(new File(file),"botbrew")).exists();
+					if((!rebase)&&(loop)&&((new File(new File(file),"fs.img")).exists())) rebase = true;
 					startActivity(new Intent(BootstrapReadyActivity.this,rebase?BootstrapRebaseActivity.class:BootstrapDownloadActivity.class).putExtra("file",file).putExtra("loop",loop));
 					finish();
 				}

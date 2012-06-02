@@ -131,7 +131,7 @@ public class Main extends SherlockFragmentActivity {
 		}
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		BotBrewApp.root = new File(pref.getString("var_root",BotBrewApp.default_root));
-		if(!mApplication.isInstalled(BotBrewApp.root)) {
+		if(!mApplication.checkInstall(BotBrewApp.root,false)) {
 			startActivity((new Intent(this,BootstrapReadyActivity.class)).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 			finish();
 			return;
