@@ -399,8 +399,6 @@ int main(int argc, char *argv[]) {
 		config.target = (char*)malloc(PATH_MAX);
 		config.target = realpath(dirname(loopmount),config.target);
 		config.target = (char*)realloc(config.target,strlen(config.target)+1);
-		self = (char*)malloc(snprintf(NULL,0,"%s/init",config.target)+1);
-		sprintf(self,"%s/init",config.target);
 	} else if(!S_ISDIR(st.st_mode)) {
 		fprintf(stderr,"whoops: `%s' is not a directory\n",config.target);
 		return EXIT_FAILURE;
@@ -408,6 +406,8 @@ int main(int argc, char *argv[]) {
 		if((st.st_uid)||(st.st_gid)) chown(config.target,0,0);
 		if((st.st_mode&S_IWGRP)||(st.st_mode&S_IWOTH)) chmod(config.target,0755);
 	}
+	self = (char*)malloc(snprintf(NULL,0,"%s/init",config.target)+1);
+	sprintf(self,"%s/init",config.target);
 	// check if directory mounted
 	int mounted = 0;
 	int loopmounted = 0;
@@ -458,15 +458,15 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr,"whoops: cannot mount `%s'\n",loopmount);
 				return EXIT_FAILURE;
 			}
-			if(strcmp(argv[0],self) != 0) {
-				time_t mtime = st.st_mtime;
-				if(!stat(self,&st)) {
-					if((!S_ISDIR(st.st_mode))&&(st.st_mtime < mtime)) copy(argv[0],self);
-				} else copy(argv[0],self);
-			}
 			loopmounted = 1;
 		}
 		mount_setup(config.target,loopmounted);
+		if(strcmp(argv[0],self) != 0) {
+			time_t mtime = st.st_mtime;
+			if(!stat(self,&st)) {
+				if((!S_ISDIR(st.st_mode))&&(st.st_mtime < mtime)) copy(argv[0],self);
+			} else copy(argv[0],self);
+		}
 		if(!stat(self,&st)) {
 			// setuid
 			if((st.st_uid)||(st.st_gid)) chown(self,0,0);
