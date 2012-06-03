@@ -10,6 +10,7 @@
 #include <mntent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
@@ -248,21 +249,18 @@ static void mount_teardown(char *target, int loopdev) {
 	else umount2(target,MNT_DETACH);
 }
 
-static int copy(char *source, char *dest) {
-	if((!source)||(!dest)) return -1;
-	int pid = fork();
-	if(pid < 0) return -1;
-	else if(pid == 0) execlp("cp","cp",source,dest,(char*)0);
-	else {
-		int status;
-		signal(SIGTTIN,SIG_IGN);
-		if(waitpid(pid,&status,WNOHANG) == 0) {
-			signal(SIGTTIN,SIG_DFL);
-			return status;
-		}
-		signal(SIGTTIN,SIG_DFL);
-		return -1;
-	}
+static int copy(char *src, char *dst) {
+	if((!src)||(!dst)) return -1;
+	fprintf(stderr,"COPYING\n");
+	struct stat st;
+	int src_fd = open(src,O_RDONLY);
+	fstat(src_fd,&st);
+	int dst_fd = open(dst,O_WRONLY|O_CREAT,st.st_mode);
+	off_t offset = 0;
+	sendfile(dst_fd,src_fd,&offset,st.st_size);
+	close(dst_fd);
+	close(src_fd);
+	return 0;
 }
 
 static int main_clone(struct config *config) {
