@@ -1,11 +1,14 @@
 package com.botbrew.basil;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -30,11 +33,10 @@ public class BootstrapReadyActivity extends SherlockFragmentActivity {
 		actionbar.setDisplayUseLogoEnabled(true);
 		vLocation = (Spinner)findViewById(R.id.location);
 		mLocations.clear();
-		mLocations.add("/data/"+getResources().getText(R.string.filename_default));
-		mLocations.add("/sd-ext/"+getResources().getText(R.string.filename_default));
-		mLocations.add("/cache/"+getResources().getText(R.string.filename_default));
-		mLocations.add("/emmc/"+getResources().getText(R.string.filename_default));
-		mLocations.add("/sdcard/"+getResources().getText(R.string.filename_default));
+		final String filename_default = getResources().getText(R.string.filename_default).toString();
+		for(String prefix: new String[] {"/data","/sd-ext","/cache","/emmc","/sdcard","/usbdisk"}) try {
+			if((new File(prefix)).isDirectory()) mLocations.add((new File(prefix,filename_default)).getCanonicalPath());
+		} catch(IOException ex) {}
 		mLocations.add(STR_CUSTOM);
 		mLocation = mLocations.get(0);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,mLocations);
@@ -56,9 +58,14 @@ public class BootstrapReadyActivity extends SherlockFragmentActivity {
 			public void onClick(View v) {
 				final String file = (String)vLocation.getSelectedItem();
 				if(!STR_CUSTOM.equals(file)) {
-					final boolean loop = BotBrewApp.needsLoopMount(file);
-					boolean rebase = (new File(new File(file),"botbrew")).exists();
-					if((!rebase)&&(loop)&&((new File(new File(file),"fs.img")).exists())) rebase = true;
+					final File path = new File(file);
+					boolean loop = false;
+					try {
+						final MountFs.MountEntry mntent = MountFs.find(path);
+						if((mntent != null)&&("vfat".equals(mntent.fs_vfstype))) loop = true;
+					} catch(FileNotFoundException ex) {}
+					boolean rebase = (new File(path,"botbrew")).exists();
+					if((!rebase)&&(loop)&&((new File(path,"fs.img")).exists())) rebase = true;
 					startActivity(new Intent(BootstrapReadyActivity.this,rebase?BootstrapRebaseActivity.class:BootstrapDownloadActivity.class).putExtra("file",file).putExtra("loop",loop));
 					finish();
 				}

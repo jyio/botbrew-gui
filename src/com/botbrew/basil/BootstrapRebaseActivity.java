@@ -39,6 +39,7 @@ public class BootstrapRebaseActivity extends SherlockFragmentActivity {
 		((Button)findViewById(R.id.setdefault)).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				((BotBrewApp)getApplicationContext()).nativeInstall(new File(file));
 				final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(BootstrapRebaseActivity.this);
 				final SharedPreferences.Editor editor = pref.edit();
 				editor.putString("var_root",file);

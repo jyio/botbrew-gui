@@ -2,6 +2,7 @@ package com.botbrew.basil;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -59,7 +60,7 @@ public class BotBrewApp extends Application {
 				if(path_init.isFile()) {
 					p = Runtime.getRuntime().exec(new String[] {rootshell});
 					p_stdin = p.getOutputStream();
-					p_stdin.write(("exec '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
+					p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
 					p_stdin.close();
 					sinkError(p);
 					return p.waitFor() == 0;
@@ -87,7 +88,10 @@ public class BotBrewApp extends Application {
 		return false;
 	}
 	public boolean nativeInstall(final File path) {
-		if(needsLoopMount(path.getAbsolutePath())) return checkInstall(path,true);
+		try {
+			final MountFs.MountEntry mntent = MountFs.find(path);
+			if((mntent != null)&&("vfat".equals(mntent.fs_vfstype))) return checkInstall(path,true);
+		} catch(FileNotFoundException ex) {}
 		try {
 			final Shell.Pipe sh = Shell.Pipe.getRootShell();
 			final OutputStream p_stdin = sh.stdin();
@@ -117,17 +121,6 @@ public class BotBrewApp extends Application {
 	}
 	public boolean isWide() {
 		return getScreenWidthDp() >= 800;
-	}
-	public static boolean needsLoopMount(final String path) {
-		if(
-			(path.startsWith("/sdcard"))||
-			(path.startsWith("/mnt/sdcard"))||
-			(path.startsWith("/emmc"))||
-			(path.startsWith("/mnt/emmc"))||
-			(path.startsWith("/usbdisk"))||
-			(path.startsWith("/mnt/usbdisk"))
-		) return true;
-		else return false;
 	}
 	public static long checksumSource() {
 		long total = (new File(root,"etc/apt/sources.list")).lastModified();

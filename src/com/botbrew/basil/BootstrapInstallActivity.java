@@ -68,7 +68,6 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 			for(String mkdir: mkdir_p(new File(file))) mFDstdin.write(("mkdir '"+mkdir+"'\n").getBytes());
 			mFDstdin.write(("cd '"+file+"'\n").getBytes());
 			mFDstdin.write(("'"+cmd+"' -n\n").getBytes());
-			mFDstdin.write(("rm '"+cmd+"'\n").getBytes());
 			mFDstdin.write(("exit\n").getBytes());
 			EmulatorView emulator = (EmulatorView)findViewById(R.id.emulator);
 			emulator.attachSession(mTermSession);
@@ -86,7 +85,9 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 				@Override
 				protected Integer doInBackground(final Void... ign) {
 					mLocked = true;
-					return Exec.waitFor(mPID);
+					int res = Exec.waitFor(mPID);
+					archive.delete();
+					return res;
 				}
 				@Override
 				protected void onCancelled(Integer result) {
@@ -100,6 +101,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 						onCancelled(result);
 						return;
 					}
+					((BotBrewApp)getApplicationContext()).nativeInstall(new File(file));
 					SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(BootstrapInstallActivity.this);
 					SharedPreferences.Editor editor = pref.edit();
 					editor.putString("var_root",file);
