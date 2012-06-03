@@ -251,7 +251,6 @@ static void mount_teardown(char *target, int loopdev) {
 
 static int copy(char *src, char *dst) {
 	if((!src)||(!dst)) return -1;
-	fprintf(stderr,"COPYING\n");
 	struct stat st;
 	int src_fd = open(src,O_RDONLY);
 	fstat(src_fd,&st);
