@@ -87,6 +87,7 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 					mLocked = true;
 					int res = Exec.waitFor(mPID);
 					archive.delete();
+					((BotBrewApp)getApplicationContext()).nativeInstall(new File(file));
 					return res;
 				}
 				@Override
@@ -101,7 +102,6 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 						onCancelled(result);
 						return;
 					}
-					((BotBrewApp)getApplicationContext()).nativeInstall(new File(file));
 					SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(BootstrapInstallActivity.this);
 					SharedPreferences.Editor editor = pref.edit();
 					editor.putString("var_root",file);
