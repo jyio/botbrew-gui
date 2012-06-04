@@ -25,6 +25,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -204,6 +205,9 @@ public class Main extends SherlockFragmentActivity {
 				return true;
 			case R.id.menu_control:
 				startActivity(new Intent(this,ControlActivity.class));
+				return true;
+			case R.id.menu_clean:
+				Toast.makeText(this,mApplication.clean()?"Archives cleaned.":"Archives already clean.",Toast.LENGTH_SHORT).show();
 				return true;
 		}
 		return super.onOptionsItemSelected(item);

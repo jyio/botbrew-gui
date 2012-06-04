@@ -24,4 +24,10 @@
 		android:icon="@android:drawable/ic_menu_preferences"
 		android:orderInCategory="3"
 		android:showAsAction="ifRoom" />
+	<item
+		android:id="@+id/menu_clean"
+		android:title="@string/menu_clean"
+		android:icon="@android:drawable/ic_menu_delete"
+		android:orderInCategory="4"
+		android:showAsAction="never" />
 </menu>

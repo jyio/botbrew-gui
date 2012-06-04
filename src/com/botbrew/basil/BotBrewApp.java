@@ -107,6 +107,19 @@ public class BotBrewApp extends Application {
 		}
 		return false;
 	}
+	public boolean clean() {
+		try {
+			final Process p = Runtime.getRuntime().exec(new String[] {rootshell});
+			final OutputStream p_stdin = p.getOutputStream();
+			p_stdin.write(("exec '"+root.getAbsolutePath()+"/init' -- apt-get clean").getBytes());
+			p_stdin.close();
+			sinkError(p);
+			return (p.waitFor() == 0);
+		} catch(IOException ex) {
+		} catch(InterruptedException ex) {
+		}
+		return false;
+	}
 	public boolean isOnline() {
 		NetworkInfo ni = ((ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
 		if((ni != null)&&(ni.isConnected())) return true;
