@@ -15,6 +15,7 @@ import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.os.StatFs;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
@@ -134,6 +135,14 @@ public class BotBrewApp extends Application {
 	}
 	public boolean isWide() {
 		return getScreenWidthDp() >= 800;
+	}
+	public static long getByteCount(String path) {
+		StatFs stat = new StatFs(path);
+		return ((long)stat.getBlockCount())*stat.getBlockSize();
+	}
+	public static long getFreeBytes(String path) {
+		StatFs stat = new StatFs(path);
+		return ((long)stat.getAvailableBlocks())*stat.getBlockSize();
 	}
 	public static long checksumSource() {
 		long total = (new File(root,"etc/apt/sources.list")).lastModified();

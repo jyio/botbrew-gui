@@ -1,6 +1,7 @@
 package com.botbrew.basil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
@@ -24,7 +25,9 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.format.Formatter;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -87,6 +90,7 @@ public class Main extends SherlockFragmentActivity {
 	private BotBrewApp mApplication;
 	private PagerAdapter mPagerAdapter;
 	private ViewPager mPager;
+	private TextView freespace;
 	private Handler mHandler = new Handler();
 	private boolean mLocked = false;
 	@Override
@@ -118,6 +122,7 @@ public class Main extends SherlockFragmentActivity {
 		actionbar.setTitle("");
 		actionbar.setHomeButtonEnabled(true);
 		actionbar.setDisplayUseLogoEnabled(true);
+		freespace = (TextView)findViewById(R.id.freespace);
 		onNewIntent(getIntent());
 	}
 	@Override
@@ -215,6 +220,14 @@ public class Main extends SherlockFragmentActivity {
 	@Override
 	public void onResume() {
 		super.onResume();
+		try {
+			final String path = BotBrewApp.root.getCanonicalPath();
+			freespace.setText(Formatter.formatFileSize(this,BotBrewApp.getFreeBytes(path))+"/"+Formatter.formatFileSize(this,BotBrewApp.getByteCount(path))+" free in "+path);
+		} catch(IOException ex) {
+			freespace.setText(BotBrewApp.root.getAbsolutePath());
+		} catch(RuntimeException ex) {
+			freespace.setText("not bootstrapped");
+		}
 		bindService(new Intent(this,ControllerService.class),mConnection,BIND_AUTO_CREATE);
 		if(BotBrewApp.root != null) conditionalRefresh(true);
 	}
