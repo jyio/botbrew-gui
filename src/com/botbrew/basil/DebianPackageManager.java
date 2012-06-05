@@ -116,29 +116,46 @@ public class DebianPackageManager {
 		}
 		return sb.toString();
 	}
+	protected String cat(final CharSequence... ss) {
+		final StringBuffer sb = new StringBuffer();
+		for(CharSequence s: ss) {
+			sb.append(" ");
+			sb.append(s);
+		}
+		return sb.substring(1);
+	}
+	protected String qcat(final CharSequence... ss) {
+		final StringBuffer sb = new StringBuffer();
+		for(CharSequence s: ss) {
+			sb.append(" '");
+			sb.append(s);
+			sb.append("'");
+		}
+		return sb.substring(1);
+	}
 	public String aptget_update() {
 		return "apt-get"+mkConfigStr()+" update";
 	}
 	public String aptget_upgrade() {
 		return "apt-get"+mkConfigStr()+" upgrade";
 	}
-	public String aptget_upgrade(final String pkg) {
-		return "apt-get"+mkConfigStr()+" upgrade "+pkg;
+	public String aptget_upgrade(final CharSequence... pkg) {
+		return "apt-get"+mkConfigStr()+" upgrade "+qcat(pkg);
 	}
 	public String aptget_distupgrade() {
 		return "apt-get"+mkConfigStr()+" dist-upgrade";
 	}
-	public String aptget_distupgrade(final String pkg) {
-		return "apt-get"+mkConfigStr()+" dist-upgrade "+pkg;
+	public String aptget_distupgrade(final CharSequence... pkg) {
+		return "apt-get"+mkConfigStr()+" dist-upgrade "+qcat(pkg);
 	}
-	public String aptget_install(final String pkg) {
-		return "apt-get"+mkConfigStr()+" install "+pkg;
+	public String aptget_install(final CharSequence... pkg) {
+		return "apt-get"+mkConfigStr()+" install "+qcat(pkg);
 	}
-	public String aptget_remove(final String pkg) {
-		return "apt-get"+mkConfigStr()+" remove "+pkg;
+	public String aptget_remove(final CharSequence... pkg) {
+		return "apt-get"+mkConfigStr()+" remove "+qcat(pkg);
 	}
-	public String aptget_autoremove(final String pkg) {
-		return "apt-get"+mkConfigStr()+" autoremove "+pkg;
+	public String aptget_autoremove(final CharSequence... pkg) {
+		return "apt-get"+mkConfigStr()+" autoremove "+qcat(pkg);
 	}
 	public String aptget_clean() {
 		return "apt-get"+mkConfigStr()+" clean";
@@ -146,16 +163,16 @@ public class DebianPackageManager {
 	public String aptget_autoclean() {
 		return "apt-get"+mkConfigStr()+" autoclean";
 	}
-	public String aptcache_show(final String pkg) {
-		return "apt-cache"+mkConfigStr()+" show '"+pkg+"'";
+	public String aptcache_show(final CharSequence... pkg) {
+		return "apt-cache"+mkConfigStr()+" show "+qcat(pkg);
 	}
 	public String aptcache_search() {
 		return "apt-cache"+mkConfigStr()+" search ''";
 	}
-	public String aptcache_search(final String q) {
-		return "apt-cache"+mkConfigStr()+" search '"+q+"'";
+	public String aptcache_search(final CharSequence... q) {
+		return "apt-cache"+mkConfigStr()+" search "+qcat(q);
 	}
-	public String dpkgquery(final String q) {
+	public String dpkgquery(final CharSequence q) {
 		return "dpkg-query "+q;
 	}
 	public boolean pm_update(final File tmpdir) {
