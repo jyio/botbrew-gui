@@ -71,6 +71,7 @@ public abstract class Shell {
 	protected OutputStream in;
 	protected InputStream out;
 	protected InputStream err;
+	abstract int waitFor() throws InterruptedException;
 	public OutputStream stdin() {
 		return in;
 	}
