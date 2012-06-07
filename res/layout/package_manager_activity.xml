@@ -8,11 +8,16 @@
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:textAppearance="?android:attr/textAppearanceLarge" />
-	<jackpal.androidterm.emulatorview.EmulatorView
-		android:id="@+id/emulator"
+	<FrameLayout
+	    android:id="@+id/viewframe"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:layout_weight="1" />
+	<!-- <jackpal.androidterm.emulatorview.EmulatorView
+		android:id="@+id/emulator"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_weight="1" /> -->
 	<TextView
 		android:id="@+id/result"
 		android:layout_width="match_parent"

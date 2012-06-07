@@ -148,6 +148,9 @@ public class DebianPackageManager {
 	public String aptget_distupgrade(final CharSequence... pkg) {
 		return "apt-get"+mkConfigStr()+" dist-upgrade "+qcat(pkg);
 	}
+	public String aptget_install() {
+		return "apt-get"+mkConfigStr()+" install";
+	}
 	public String aptget_install(final CharSequence... pkg) {
 		return "apt-get"+mkConfigStr()+" install "+qcat(pkg);
 	}
@@ -174,6 +177,9 @@ public class DebianPackageManager {
 	}
 	public String dpkgquery(final CharSequence q) {
 		return "dpkg-query "+q;
+	}
+	public String dpkg_install(final CharSequence... pkg) {
+		return "dpkg --install "+qcat(pkg);
 	}
 	public boolean pm_update(final File tmpdir) {
 		try {
