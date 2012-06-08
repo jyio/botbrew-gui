@@ -17,6 +17,7 @@ public abstract class Shell {
 			proc = Runtime.getRuntime().exec(cmd);
 			stdin(proc.getOutputStream());
 			stdout(proc.getInputStream());
+			stderr(proc.getErrorStream());
 		}
 		public Pipe redirect() throws IOException {
 			exec("2>&1");
@@ -28,6 +29,9 @@ public abstract class Shell {
 			} catch(IOException ex) {}
 			if(out != null) try {
 				out.close();
+			} catch(IOException ex) {}
+			if(err != null) try {
+				err.close();
 			} catch(IOException ex) {}
 		}
 		public int waitFor() throws InterruptedException {
