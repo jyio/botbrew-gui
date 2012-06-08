@@ -47,9 +47,9 @@ static struct mountspec foreign_mounts[] = {
 	{"/sdcard","/android/sdcard",NULL,MS_BIND,NULL,0},
 	{"/system","/android/system",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
 	{"/usbdisk","/android/usbdisk",NULL,MS_BIND,NULL,0},
-	{"/system/xbin","/android/system/xbin",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME}
+	{"/system/xbin","/android/system/xbin",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
+	{NULL,NULL,NULL,0,NULL,0}
 };
-static int n_foreign_mounts = sizeof(foreign_mounts)/sizeof(foreign_mounts[0]);
 
 static void usage(char *progname) {
 	fprintf(stderr,
@@ -217,10 +217,11 @@ static void mount_setup(char *target, int loopdev) {
 	mkdir(fs,01777);
 	free(fs);
 	size_t target_len = strlen(target);
-	int i;
+	int i = 0;
 	struct stat st;
-	for(i = 0; i < n_foreign_mounts; i++) {
-		struct mountspec m = foreign_mounts[i];
+	while(1) {
+		struct mountspec m = foreign_mounts[i++];
+		if(m.dst == NULL) break;
 		if((m.src)&&(stat(m.src,&st) != 0)) continue;
 		size_t dst_len = strlen(m.dst);
 		char *dst = (char*)malloc(target_len+dst_len+1);
