@@ -38,6 +38,7 @@ static struct mountspec foreign_mounts[] = {
 	{"/dev","/dev",NULL,MS_BIND,NULL,0},
 	{"/dev/pts","/dev/pts",NULL,MS_BIND,NULL,0},
 	{NULL,"/sys","sysfs",0,NULL,0},
+	{NULL,"/run","tmpfs",0,"size=10%,mode=0755",0},
 	{NULL,"/android","tmpfs",MS_NODEV|MS_NOEXEC|MS_NOATIME,"size=1M,mode=0755",0},
 	{"/cache","/android/cache",NULL,MS_BIND,NULL,0},
 	{"/data","/android/data",NULL,MS_BIND,NULL,0},
@@ -48,6 +49,16 @@ static struct mountspec foreign_mounts[] = {
 	{"/system","/android/system",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
 	{"/usbdisk","/android/usbdisk",NULL,MS_BIND,NULL,0},
 	{"/system/xbin","/android/system/xbin",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
+	{NULL,NULL,NULL,0,NULL,0}
+};
+
+static struct mountspec local_mounts[] = {
+	{"/etc","/botbrew/etc",NULL,MS_BIND,NULL,0},
+	{"/home","/botbrew/home",NULL,MS_BIND,NULL,0},
+	{"/root","/botbrew/root",NULL,MS_BIND,NULL,0},
+	{"/var","/botbrew/var",NULL,MS_BIND,NULL,0},
+	{"/usr/share","/botbrew/share",NULL,MS_BIND,NULL,0},
+	{"/run","/botbrew/run",NULL,MS_BIND,NULL,0},
 	{NULL,NULL,NULL,0,NULL,0}
 };
 
@@ -173,64 +184,43 @@ static int loopdev_umount2(const char *target, int flags) {
 static void mount_setup(char *target, int loopdev) {
 	if(!loopdev) mount(target,target,NULL,MS_BIND,NULL);
 	mount(target,target,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME,NULL);
-	char *fs = strconcat(target,"/etc");
-	char *fs_dst = strconcat(target,"/botbrew/etc");
-	mkdir(fs_dst,0755);
-	mount(fs,fs_dst,NULL,MS_BIND,NULL);
-	free(fs_dst);
-	free(fs);
-	fs = strconcat(target,"/home");
-	fs_dst = strconcat(target,"/botbrew/home");
-	mkdir(fs_dst,0755);
-	mount(fs,fs_dst,NULL,MS_BIND,NULL);
-	free(fs_dst);
-	free(fs);
-	fs = strconcat(target,"/root");
-	fs_dst = strconcat(target,"/botbrew/root");
-	mkdir(fs_dst,0755);
-	mount(fs,fs_dst,NULL,MS_BIND,NULL);
-	free(fs_dst);
-	free(fs);
-	fs = strconcat(target,"/var");
-	fs_dst = strconcat(target,"/botbrew/var");
-	mkdir(fs_dst,0755);
-	mount(fs,fs_dst,NULL,MS_BIND,NULL);
-	free(fs_dst);
-	free(fs);
-	fs = strconcat(target,"/usr/share");
-	fs_dst = strconcat(target,"/botbrew/share");
-	mkdir(fs_dst,0755);
-	mount(fs,fs_dst,NULL,MS_BIND,NULL);
-	free(fs_dst);
-	free(fs);
-	fs = strconcat(target,"/run");
-	mount(NULL,fs,"tmpfs",0,"size=10%,mode=0755");
-	fs_dst = strconcat(target,"/botbrew/run");
-	mkdir(fs_dst,0755);
-	mount(fs,fs_dst,NULL,MS_BIND,NULL);
-	free(fs_dst);
-	free(fs);
-	fs = strconcat(target,"/run/tmp");
-	mkdir(fs,01777);
-	free(fs);
-	fs = strconcat(target,"/run/lock");
-	mkdir(fs,01777);
-	free(fs);
-	size_t target_len = strlen(target);
 	int i = 0;
 	struct stat st;
+	char *src;
+	char *dst;
 	while(1) {
 		struct mountspec m = foreign_mounts[i++];
 		if(m.dst == NULL) break;
 		if((m.src)&&(stat(m.src,&st) != 0)) continue;
-		size_t dst_len = strlen(m.dst);
-		char *dst = (char*)malloc(target_len+dst_len+1);
-		memcpy(dst,target,target_len);
-		memcpy(dst+target_len,m.dst,dst_len+1);	// includes null terminator
+		dst = strconcat(target,m.dst);
 		mkdir(dst,0755);
 		if(mount(m.src,dst,m.type,m.flags,m.data)) rmdir(dst);
 		else if(m.remount_flags) mount(dst,dst,NULL,m.remount_flags|MS_REMOUNT,NULL);
 		free(dst);
+	}
+	dst = strconcat(target,"/run/tmp");
+	mkdir(dst,01777);
+	free(dst);
+	dst = strconcat(target,"/run/lock");
+	mkdir(dst,01777);
+	free(dst);
+	i = 0;
+	while(1) {
+		struct mountspec m = local_mounts[i++];
+		if(m.dst == NULL) break;
+		if(m.src) {
+			src = strconcat(target,m.src);
+			if(stat(src,&st) != 0) {
+				free(src);
+				continue;
+			}
+		} else src = NULL;
+		dst = strconcat(target,m.dst);
+		mkdir(dst,0755);
+		if(mount(src,dst,m.type,m.flags,m.data)) rmdir(dst);
+		else if(m.remount_flags) mount(dst,dst,NULL,m.remount_flags|MS_REMOUNT,NULL);
+		free(dst);
+		free(src);
 	}
 }
 
