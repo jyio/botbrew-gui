@@ -59,34 +59,6 @@ class PagerAdapter extends FragmentPagerAdapter implements TitleProvider {
 }
 
 public class Main extends SherlockFragmentActivity {
-	private final Messenger mLocalMessenger = new Messenger(new EnumHandler<MessageType>(MessageType.class) {
-		@Override
-		public void handleMessage(MessageType msg) {
-			switch(msg) {
-				case MSG_SET_VALUE:
-					break;
-			}
-		}
-	});
-	private ServiceConnection mConnection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName className, IBinder service) {
-			mRemoteMessenger = new Messenger(service);
-			Log.v(BotBrewApp.TAG,"ServiceConnection.onServiceConnected("+className+")");
-			try {
-				Message msg = Message.obtain(null,MessageType.MSG_REGISTER_CLIENT.ordinal());
-				msg.replyTo = mLocalMessenger;
-				mRemoteMessenger.send(msg);
-			} catch (RemoteException e) {
-				// In this case the service has crashed before we could even do anything with it
-			}
-		}
-		public void onServiceDisconnected(ComponentName className) {
-			// This is called when the connection with the service has been unexpectedly disconnected - process crashed.
-			mRemoteMessenger = null;
-			Log.v(BotBrewApp.TAG,"ServiceConnection.onServiceDisconnected("+className+")");
-		}
-	};
-	private Messenger mRemoteMessenger = null;
 	private BotBrewApp mApplication;
 	private PagerAdapter mPagerAdapter;
 	private ViewPager mPager;
@@ -228,14 +200,7 @@ public class Main extends SherlockFragmentActivity {
 		} catch(RuntimeException ex) {
 			freespace.setText("not bootstrapped");
 		}
-		bindService(new Intent(this,ControllerService.class),mConnection,BIND_AUTO_CREATE);
 		if(BotBrewApp.root != null) conditionalRefresh(true);
-	}
-	@Override
-	public void onPause() {
-		unbindService(mConnection);
-		mRemoteMessenger = null;
-		super.onPause();
 	}
 	@Override
 	public void onBackPressed() {

@@ -94,10 +94,6 @@
 			android:name=".ExplorerActivity"
 			android:label="Explorer" />
 		<service
-			android:name=".ControllerService"
-			android:enabled="true"
-			android:permission="android.permission.INTERNET" />
-		<service
 			android:name=".SupervisorService"
 			android:enabled="true" />
 		<provider
