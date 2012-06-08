@@ -98,7 +98,7 @@ public class RepairListFragment extends SherlockListFragment implements LoaderMa
 	}
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		startActivity((new Intent(getActivity(),PackageStatusActivity.class)).putExtra("package",(String)adapter.getItem(position)));
+		startActivity((new Intent(getActivity(),PackageManagerActivity.class)).putExtra("package",(String)adapter.getItem(position)));
 	}
 	// LoaderManager.LoaderCallbacks<Cursor> methods
 	@Override

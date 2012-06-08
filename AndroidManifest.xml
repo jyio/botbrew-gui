@@ -74,12 +74,6 @@
 			android:windowSoftInputMode="adjustResize"
 			android:configChanges="orientation|screenSize" />
 		<activity
-			android:name=".PackageStatusActivity"
-			android:label="Package Status"
-			android:launchMode="singleTop"
-			android:windowSoftInputMode="adjustResize"
-			android:configChanges="orientation|screenSize" />
-		<activity
 			android:name=".PackageManagerActivity"
 			android:label="Package Manager"
 			android:launchMode="singleTop"

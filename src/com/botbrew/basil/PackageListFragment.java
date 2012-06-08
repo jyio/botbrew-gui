@@ -117,7 +117,7 @@ public abstract class PackageListFragment extends SherlockListFragment implement
 	}
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		startActivity((new Intent(getActivity(),PackageStatusActivity.class)).putExtra("package",((TextView)v.findViewById(R.id.package_name)).getText()));
+		startActivity((new Intent(getActivity(),PackageManagerActivity.class)).putExtra("command","info").putExtra("package",((TextView)v.findViewById(R.id.package_name)).getText()));
 	}
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {

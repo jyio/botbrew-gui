@@ -4,12 +4,16 @@ import jackpal.androidterm.emulatorview.ColorScheme;
 import jackpal.androidterm.emulatorview.EmulatorView;
 import jackpal.androidterm.emulatorview.TermSession;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -17,6 +21,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -25,8 +31,6 @@ import com.actionbarsherlock.view.MenuItem;
 
 public class PackageManagerActivity extends SherlockFragmentActivity {
 	protected static enum TransactionType {
-		DPKG_INSTALL,
-		APTCACHE_SHOW,
 		APTGET_INSTALL,
 		APTGET_REINSTALL,
 		APTGET_UPGRADE,
@@ -35,24 +39,27 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		APTGET_AUTOREMOVE
 	}
 	private BotBrewApp mApp;
+	private ActionBar mActionBar;
 	private boolean mLocked = false;
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.package_manager_activity);
-		ActionBar actionbar = getSupportActionBar();
-		actionbar.setHomeButtonEnabled(true);
-		actionbar.setDisplayHomeAsUpEnabled(true);
-		actionbar.setDisplayUseLogoEnabled(true);
+		mActionBar = getSupportActionBar();
+		mActionBar.setHomeButtonEnabled(true);
+		mActionBar.setDisplayHomeAsUpEnabled(true);
+		mActionBar.setDisplayUseLogoEnabled(true);
+		mApp = (BotBrewApp)getApplicationContext();
 		final Intent intent = getIntent();
-		final String command = intent.getStringExtra("command");
-		final String pkg = intent.getStringExtra("package");
-		if("installdeb".equals(command)) doDpkgInstall(pkg);
+		final CharSequence command = intent.getCharSequenceExtra("command");
+		final CharSequence pkg = intent.getCharSequenceExtra("package");
+		if("info".equals(command)) doInfo(pkg);
 		else if("install".equals(command)) doAptGet(TransactionType.APTGET_INSTALL,pkg);
 		else if("reinstall".equals(command)) doAptGet(TransactionType.APTGET_REINSTALL,pkg);
 		else if("remove".equals(command)) doAptGet(TransactionType.APTGET_REMOVE,pkg);
 		else if("autoremove".equals(command)) doAptGet(TransactionType.APTGET_AUTOREMOVE,pkg);
 		else if("upgrade".equals(command)) doAptGet(TransactionType.APTGET_DISTUPGRADE,pkg);
+		else if("installdeb".equals(command)) doDpkgInstall(pkg);
 		else finish();
 	}
 	@Override
@@ -82,7 +89,127 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 				}
 			});
 			layout.addView(emulator);
-		};
+		} else if(obj instanceof CharSequence) {
+			final ScrollView wrapper = new ScrollView(this);
+			final TextView tv = new TextView(this,null,android.R.attr.textAppearanceMedium);
+			tv.setTypeface(Typeface.MONOSPACE);
+			tv.setText((CharSequence)obj);
+			wrapper.addView(tv);
+			layout.addView(wrapper);
+		}
+	}
+	protected Button buttonOnClick(final Button v, final View.OnClickListener l) {
+		v.setVisibility(View.VISIBLE);
+		v.setOnClickListener(l);
+		return v;
+	}
+	public void doInfo(final CharSequence pkg) {
+		PreferenceManager.setDefaultValues(this,R.xml.preference,false);
+		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+		final String root = (new File(pref.getString("var_root",BotBrewApp.default_root))).getAbsolutePath();
+		final DebianPackageManager dpm = new DebianPackageManager(root);
+		dpm.config(pref);
+		(new AsyncTask<Void,CharSequence,Integer>() {
+			@Override
+			protected Integer doInBackground(final Void... ign) {
+				try {
+					mLocked = true;
+					final Shell sh = Shell.Pipe.getUserShell().redirect();
+					sh.botbrew(root,dpm.aptcache_show(pkg));
+					sh.stdin().close();
+					String line;
+					final StringBuilder sb = new StringBuilder();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(sh.stdout()));
+					while((line = reader.readLine()) != null) {
+						sb.append(line);
+						sb.append("\n");
+					}
+					reader.close();
+					publishProgress(sb.toString());
+					return sh.waitFor();
+				} catch(IOException ex) {
+				} catch(InterruptedException ex) {
+				}
+				return -1;
+			}
+			@Override
+			protected void onProgressUpdate(CharSequence... progress) {
+				setViewFrame(progress[progress.length-1]);
+			}
+			@Override
+			protected void onCancelled(Integer result) {
+				buttonOnClick((Button)findViewById(R.id.retry),new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						finish();
+						startActivity(getIntent());
+					}
+				});
+				mLocked = false;
+			}
+			@Override
+			protected void onPostExecute(Integer result) {
+				if(result.intValue() != 0) {
+					onCancelled(result);
+					return;
+				}
+				mActionBar.setTitle("Package "+pkg);
+				// TODO: multiarch
+				Cursor cursor = getContentResolver().query(
+					PackageCacheProvider.ContentUri.CACHE_BASE.uri,
+					new String[] {DatabaseOpenHelper.C_NAME+" AS _id",DatabaseOpenHelper.C_INSTALLED,DatabaseOpenHelper.C_UPGRADABLE},
+					DatabaseOpenHelper.C_NAME+"=?",new String[] {pkg.toString()},null
+				);
+				if(cursor.getCount() < 1) return;
+				cursor.moveToFirst();
+				final String installed = cursor.getString(1);
+				final String upgradable = cursor.getString(2);
+				cursor.close();
+				final Intent intent = (new Intent(PackageManagerActivity.this,PackageManagerActivity.class)).putExtra("package",pkg);
+				if("".equals(installed)) {
+					buttonOnClick((Button)findViewById(R.id.install),new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							finish();
+							startActivity(intent.putExtra("command","install"));
+						}
+					});
+				} else {
+					if("".equals(upgradable)) {
+						buttonOnClick((Button)findViewById(R.id.reinstall),new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								finish();
+								startActivity(intent.putExtra("command","reinstall"));
+							}
+						});
+					} else {
+						buttonOnClick((Button)findViewById(R.id.upgrade),new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								finish();
+								startActivity(intent.putExtra("command","upgrade"));
+							}
+						});
+					}
+					buttonOnClick((Button)findViewById(R.id.remove),new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							finish();
+							startActivity(intent.putExtra("command","remove"));
+						}
+					});
+					buttonOnClick((Button)findViewById(R.id.autoremove),new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							finish();
+							startActivity(intent.putExtra("command","autoremove"));
+						}
+					});
+				}
+				mLocked = false;
+			}
+		}).execute();
 	}
 	public void doAptGet(final TransactionType what, final CharSequence... pkg) {
 		PreferenceManager.setDefaultValues(this,R.xml.preference,false);
@@ -93,34 +220,37 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		DebianPackageManager dpm2;
 		Shell sh = null;
 		try {
+			// TODO: multiple package names in title
 			switch(what) {
-				case APTCACHE_SHOW:
-					sh = Shell.Term.getUserShell();
-					sh.botbrew(root,dpm.aptcache_show(pkg));
-					break;
 				case APTGET_INSTALL:
+					mActionBar.setTitle("Install "+pkg[0]);
 					sh = Shell.Term.getRootShell();
 					sh.botbrew(root,dpm.aptget_install(pkg));
 					break;
 				case APTGET_REINSTALL:
+					mActionBar.setTitle("Reinstall "+pkg[0]);
 					dpm2 = new DebianPackageManager(dpm);
 					dpm2.config(DebianPackageManager.Config.APT_Get_ReInstall,"1");
 					sh = Shell.Term.getRootShell();
 					sh.botbrew(root,dpm2.aptget_install(pkg));
 					break;
 				case APTGET_UPGRADE:
+					mActionBar.setTitle("Upgrade "+pkg[0]);
 					sh = Shell.Term.getRootShell();
 					sh.botbrew(root,dpm.aptget_upgrade(pkg));
 					break;
 				case APTGET_DISTUPGRADE:
+					mActionBar.setTitle("Dist-Upgrade "+pkg[0]);
 					sh = Shell.Term.getRootShell();
 					sh.botbrew(root,dpm.aptget_distupgrade(pkg));
 					break;
 				case APTGET_REMOVE:
+					mActionBar.setTitle("Remove "+pkg[0]);
 					sh = Shell.Term.getRootShell();
 					sh.botbrew(root,dpm.aptget_remove(pkg));
 					break;
 				case APTGET_AUTOREMOVE:
+					mActionBar.setTitle("Autoremove "+pkg[0]);
 					sh = Shell.Term.getRootShell();
 					sh.botbrew(root,dpm.aptget_autoremove(pkg));
 					break;
@@ -147,10 +277,13 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 				}
 				@Override
 				protected void onCancelled(Integer result) {
-					//mProxy.onFail();
-					final TextView vResult = (TextView)findViewById(R.id.result);
-					vResult.setText("fail (press back)");
-					vResult.setVisibility(View.VISIBLE);
+					buttonOnClick((Button)findViewById(R.id.retry),new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							finish();
+							startActivity(getIntent());
+						}
+					});
 					mLocked = false;
 				}
 				@Override
@@ -159,10 +292,12 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 						onCancelled(result);
 						return;
 					}
-					//mProxy.onSuccess();
-					final TextView vResult = (TextView)findViewById(R.id.result);
-					vResult.setText("win (press back)");
-					vResult.setVisibility(View.VISIBLE);
+					buttonOnClick((Button)findViewById(R.id.ok),new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							finish();
+						}
+					});
 					mLocked = false;
 				}
 			}).execute();
@@ -178,6 +313,8 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		mLocked = true;
 		final TermSession term0 = new TermSession();
 		final TermSession term1 = new TermSession();
+		// TODO: multiple file names in title
+		mActionBar.setTitle("Install "+(new File(pkg[0].toString())).getName());
 		(new AsyncTask<Void,TermSession,Integer>() {
 			@Override
 			protected Integer doInBackground(final Void... ign) {
@@ -214,9 +351,13 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 			}
 			@Override
 			protected void onCancelled(Integer result) {
-				final TextView vResult = (TextView)findViewById(R.id.result);
-				vResult.setText("fail (press back)");
-				vResult.setVisibility(View.VISIBLE);
+				buttonOnClick((Button)findViewById(R.id.retry),new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						finish();
+						startActivity(getIntent());
+					}
+				});
 				mLocked = false;
 			}
 			@Override
@@ -225,9 +366,12 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 					onCancelled(result);
 					return;
 				}
-				final TextView vResult = (TextView)findViewById(R.id.result);
-				vResult.setText("win (press back)");
-				vResult.setVisibility(View.VISIBLE);
+				buttonOnClick((Button)findViewById(R.id.ok),new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						finish();
+					}
+				});
 				mLocked = false;
 			}
 		}).execute();

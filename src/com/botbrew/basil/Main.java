@@ -149,7 +149,7 @@ public class Main extends SherlockFragmentActivity {
 			if(data != null) {
 				if("content".equals(data.getScheme())) {
 					List<String> path = data.getPathSegments();
-					startActivity((new Intent(this,PackageStatusActivity.class)).putExtra("package",path.get(path.size()-1)));
+					startActivity((new Intent(this,PackageManagerActivity.class)).putExtra("command","info").putExtra("package",path.get(path.size()-1)));
 				} else {	// maybe android.intent.category.BROWSABLE
 				//	verifyChecksum();
 					if((new File(data.getPath())).exists()) DebInstallDialogFragment.create(data).show(getSupportFragmentManager(),null);
@@ -157,7 +157,7 @@ public class Main extends SherlockFragmentActivity {
 			}
 		} else if(Intent.ACTION_SEARCH.equals(action)) {
 		//	verifyChecksum();
-			startActivity((new Intent(this,PackageStatusActivity.class)).putExtra("package",intent.getStringExtra(SearchManager.QUERY)));
+			startActivity((new Intent(this,PackageManagerActivity.class)).putExtra("command","info").putExtra("package",intent.getStringExtra(SearchManager.QUERY)));
 		} else {
 		//	verifyChecksum();
 		}
