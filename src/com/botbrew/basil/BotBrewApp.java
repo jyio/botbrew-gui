@@ -121,6 +121,36 @@ public class BotBrewApp extends Application {
 		}
 		return false;
 	}
+	public File textEdit(final File path) {
+		try {
+			final String root = BotBrewApp.root.getCanonicalPath();
+			final File tmp = File.createTempFile("editor-"+path.getName().replace('.','-'),".tmp",getCacheDir());
+			final Shell sh = Shell.Pipe.getRootShell();
+			sh.botbrew(false,root,"cp '"+path+"' '"+tmp+"'");
+			sh.botbrew(root,"chmod 0777 '"+tmp+"'");
+			sinkOutput(sh);
+			sinkError(sh);
+			sh.waitFor();
+			return tmp;
+		} catch(IOException ex) {
+		} catch(InterruptedException ex) {
+		}
+		return null;
+	}
+	public boolean textCommit(final File path, final File tmp) {
+		try {
+			final String root = BotBrewApp.root.getCanonicalPath();
+			final Shell sh = Shell.Pipe.getRootShell();
+			sh.botbrew(false,root,"cp '"+tmp+"' '"+path+"'");
+			sh.botbrew(root,"rm '"+tmp+"'");
+			sinkOutput(sh);
+			sinkError(sh);
+			return (sh.waitFor() == 0);
+		} catch(IOException ex) {
+		} catch(InterruptedException ex) {
+		}
+		return false;
+	}
 	public boolean isOnline() {
 		NetworkInfo ni = ((ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
 		if((ni != null)&&(ni.isConnected())) return true;
@@ -168,10 +198,20 @@ public class BotBrewApp extends Application {
 		InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
 		imm.toggleSoftInput(0,0);
 	}
+	public static void sinkOutput(final Shell sh) throws IOException {
+		String line;
+		final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(sh.stdout()));
+		while((line = p_stdout.readLine()) != null) Log.v(TAG,"[STDOUT] "+line);
+	}
 	public static void sinkOutput(final Process p) throws IOException {
 		String line;
 		final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
 		while((line = p_stdout.readLine()) != null) Log.v(TAG,"[STDOUT] "+line);
+	}
+	public static void sinkError(final Shell sh) throws IOException {
+		String line;
+		final BufferedReader p_stderr = new BufferedReader(new InputStreamReader(sh.stderr()));
+		while((line = p_stderr.readLine()) != null) Log.v(TAG,"[STDERR] "+line);
 	}
 	public static void sinkError(final Process p) throws IOException {
 		String line;
