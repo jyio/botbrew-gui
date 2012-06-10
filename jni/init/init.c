@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <mntent.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <sys/mount.h>
@@ -35,32 +36,29 @@ struct mountspec {
 
 static struct mountspec foreign_mounts[] = {
 	{NULL,"/proc","proc",0,NULL,0},
-	{"/dev","/dev",NULL,MS_BIND,NULL,0},
-	{"/dev/pts","/dev/pts",NULL,MS_BIND,NULL,0},
+	{"/dev","/dev",NULL,MS_BIND|MS_REC,NULL,0},
 	{NULL,"/sys","sysfs",0,NULL,0},
 	{NULL,"/run","tmpfs",0,"size=10%,mode=0755",0},
 	{NULL,"/android","tmpfs",MS_NODEV|MS_NOEXEC|MS_NOATIME,"size=1M,mode=0755",0},
-	{"/cache","/android/cache",NULL,MS_BIND,NULL,0},
-	{"/data","/android/data",NULL,MS_BIND,NULL,0},
-	{"/datadata","/android/datadata",NULL,MS_BIND,NULL,0},
-	{"/emmc","/android/emmc",NULL,MS_BIND,NULL,0},
-	{"/sd-ext","/android/sd-ext",NULL,MS_BIND,NULL,0},
-	{"/sdcard","/android/sdcard",NULL,MS_BIND,NULL,0},
-	{"/system","/android/system",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
-	{"/usbdisk","/android/usbdisk",NULL,MS_BIND,NULL,0},
-	{"/system/xbin","/android/system/xbin",NULL,MS_BIND,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
+	{"/cache","/android/cache",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/data","/android/data",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/datadata","/android/datadata",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/sd-ext","/android/sd-ext",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/system","/android/system",NULL,MS_BIND|MS_REC,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME},
 	{NULL,NULL,NULL,0,NULL,0}
 };
 
 static struct mountspec local_mounts[] = {
-	{"/etc","/botbrew/etc",NULL,MS_BIND,NULL,0},
-	{"/home","/botbrew/home",NULL,MS_BIND,NULL,0},
-	{"/root","/botbrew/root",NULL,MS_BIND,NULL,0},
-	{"/var","/botbrew/var",NULL,MS_BIND,NULL,0},
-	{"/usr/share","/botbrew/share",NULL,MS_BIND,NULL,0},
-	{"/run","/botbrew/run",NULL,MS_BIND,NULL,0},
+	{"/etc","/botbrew/etc",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/home","/botbrew/home",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/root","/botbrew/root",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/var","/botbrew/var",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/usr/share","/botbrew/share",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/run","/botbrew/run",NULL,MS_BIND|MS_REC,NULL,0},
 	{NULL,NULL,NULL,0,NULL,0}
 };
+
+struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int buflen);
 
 static void usage(char *progname) {
 	fprintf(stderr,
@@ -181,23 +179,97 @@ static int loopdev_umount2(const char *target, int flags) {
 	return -1;
 }
 
+static void dynamic_remount(const char *dst, ...) {
+	va_list args;
+	va_start(args,dst);
+	const char *name;
+	struct stat st;
+	char *dst_tmp = strconcat(dst,"/.tmp"), *dst_slash = strconcat(dst,"/"), *dst_mnt;
+	mkdir(dst_tmp,0755);
+	char *buf = (char*)malloc(PATH_MAX), *src_path, *src_real;
+	while(src_path = va_arg(args,char*)) {
+		if((stat(src_path,&st) != 0)||(!S_ISDIR(st.st_mode))) continue;
+		dst_mnt = strconcat(dst_slash,basename(src_path));
+		mkdir(dst_mnt,0755);
+		src_real = realpath(src_path,buf);
+		FILE *fp = fopen("/proc/self/mounts","r");
+		if(fp) {
+			struct mntent *mnt;
+			int mounted = 0;
+			while(mnt = getmntent(fp)) if((mnt->mnt_fsname[0] == '/')&&(strcmp(mnt->mnt_dir,src_real) == 0)) {
+				mounted = 1;
+				break;
+			}
+			fclose(fp);
+			if(mounted) {
+				mount(NULL,src_real,NULL,MS_SHARED|MS_REC,NULL);
+				if(mount(src_real,dst_tmp,NULL,MS_BIND|MS_REC,NULL) != 0) {
+					free(dst_mnt);
+					continue;
+				}
+			}
+			while(!umount2(src_real,MNT_DETACH));
+			mount(NULL,src_real,"tmpfs",0,"size=1,mode=0755");
+			mount(NULL,src_real,NULL,MS_SHARED,NULL);
+			mount(src_real,dst_mnt,NULL,MS_BIND,NULL);
+			mount(NULL,dst_mnt,NULL,MS_SLAVE,NULL);
+			if(mounted) {
+				mount(dst_tmp,src_real,NULL,MS_BIND|MS_REC,NULL);
+				umount2(dst_tmp,MNT_DETACH);
+			}
+		}
+		free(dst_mnt);
+	}
+	va_end(args);
+	free(buf);
+	free(dst_slash);
+	rmdir(dst_tmp);
+	free(dst_tmp);
+}
+
+static void fix_mnt_symlink(const char *src, const char *dst, ...) {
+	va_list args;
+	va_start(args,dst);
+	char *name, *dst_name, *src_name;
+	while(name = va_arg(args,char*)) {
+		dst_name = strconcat(dst,name);
+		unlink(dst_name);
+		src_name = strconcat(src,name);
+		symlink(src_name,dst_name);
+		free(src_name);
+		free(dst_name);
+	}
+	va_end(args);
+}
+
 static void mount_setup(char *target, int loopdev) {
+	// prepare self-mount
 	if(!loopdev) mount(target,target,NULL,MS_BIND,NULL);
 	mount(target,target,NULL,MS_REMOUNT|MS_NODEV|MS_NOATIME,NULL);
 	int i = 0;
 	struct stat st;
-	char *src;
 	char *dst;
+	// prepare foreign mounts
 	while(1) {
 		struct mountspec m = foreign_mounts[i++];
 		if(m.dst == NULL) break;
-		if((m.src)&&(stat(m.src,&st) != 0)) continue;
+		if(m.src) {
+			if(stat(m.src,&st) != 0) continue;
+			if(m.flags&MS_BIND) mount(NULL,m.src,NULL,MS_SHARED|MS_REC,NULL);
+		}
 		dst = strconcat(target,m.dst);
 		mkdir(dst,0755);
+		mount(NULL,target,NULL,MS_UNBINDABLE,NULL);
 		if(mount(m.src,dst,m.type,m.flags,m.data)) rmdir(dst);
-		else if(m.remount_flags) mount(dst,dst,NULL,m.remount_flags|MS_REMOUNT,NULL);
+		else {
+			if(m.remount_flags) mount(dst,dst,NULL,m.remount_flags|MS_REMOUNT,NULL);
+			mount(NULL,dst,NULL,MS_UNBINDABLE,NULL);
+		}
 		free(dst);
 	}
+	// share self mount
+	mount(NULL,target,NULL,MS_SHARED|MS_REC,NULL);
+	// make temporary directories
 	dst = strconcat(target,"/run/tmp");
 	mkdir(dst,01777);
 	free(dst);
@@ -205,6 +277,8 @@ static void mount_setup(char *target, int loopdev) {
 	mkdir(dst,01777);
 	free(dst);
 	i = 0;
+	char *src;
+	// prepare local mounts
 	while(1) {
 		struct mountspec m = local_mounts[i++];
 		if(m.dst == NULL) break;
@@ -217,6 +291,7 @@ static void mount_setup(char *target, int loopdev) {
 		} else src = NULL;
 		dst = strconcat(target,m.dst);
 		mkdir(dst,0755);
+		if((src)&&(m.flags&MS_BIND)) mount(NULL,src,NULL,MS_SHARED|MS_REC,NULL);
 		if(mount(src,dst,m.type,m.flags,m.data)) rmdir(dst);
 		else if(m.remount_flags) mount(dst,dst,NULL,m.remount_flags|MS_REMOUNT,NULL);
 		free(dst);
@@ -355,24 +430,52 @@ int main(int argc, char *argv[]) {
 		else return EXIT_SUCCESS;
 	}
 	if(!mounted) {
+		// require superuser
 		if(geteuid()) {
 			fprintf(stderr,"whoops: superuser privileges required for first invocation of `%s'\n",self);
 			return EXIT_FAILURE;
 		}
+		// prepare dynamic mounts
+		mkdir("/data/.botbrew",0755);
+		mount(NULL,"/data/.botbrew","tmpfs",0,"size=1M");
+		dynamic_remount("/data/.botbrew","/emmc","/sdcard","/sdcard2","/usbdisk",NULL);
 		if(loopmount) {
+			// perform loopback mount
 			if(loopdev_mount(loopmount,child_root,"ext4",0,NULL)) {
 				fprintf(stderr,"whoops: cannot mount `%s'\n",loopmount);
+				umount2("/data/.botbrew",MNT_DETACH);
+				rmdir("/data/.botbrew");
 				return EXIT_FAILURE;
 			}
 			loopmounted = 1;
 		}
+		// set up directory mappings
 		mount_setup(child_root,loopmounted);
+		// map dynamic mounts
+		char *child_mnt = strconcat(child_root,"/mnt");
+		unlink(child_mnt);
+		mkdir(child_mnt,0755);
+		mount(NULL,"/data/.botbrew",NULL,MS_SHARED|MS_REC,NULL);
+		mount("/data/.botbrew",child_mnt,NULL,MS_BIND|MS_REC,NULL);
+		mount(NULL,"/data/.botbrew",NULL,MS_UNBINDABLE|MS_REC,NULL);
+		umount2("/data/.botbrew",MNT_DETACH);
+		rmdir("/data/.botbrew");
+		free(child_mnt);
+		child_mnt = strconcat(child_root,"/data/.botbrew");
+		mount(NULL,child_mnt,NULL,MS_UNBINDABLE|MS_REC,NULL);
+		umount2(child_mnt,MNT_DETACH);
+		rmdir(child_mnt);
+		free(child_mnt);
+		// fix symlinks
+		fix_mnt_symlink("/mnt",child_root,"/emmc","/sdcard","/sdcard2","/usbdisk",NULL);
+		// copy self
 		if(strcmp(argv[0],self) != 0) {
 			time_t mtime = stat(argv[0],&st)?0:st.st_mtime;
 			if(!stat(self,&st)) {
 				if((!S_ISDIR(st.st_mode))&&(st.st_mtime < mtime)) copy(argv[0],self);
 			} else copy(argv[0],self);
 		}
+		// chmod copy
 		if(!stat(self,&st)) {
 			// setuid
 			if((st.st_uid)||(st.st_gid)) chown(self,0,0);
