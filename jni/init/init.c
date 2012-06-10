@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <sys/stat.h>
-#include <sys/sendfile.h>
+#include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
@@ -307,11 +307,30 @@ static void mount_teardown(char *target, int loopdev) {
 static int copy(char *src, char *dst) {
 	if((!src)||(!dst)) return -1;
 	struct stat st;
-	int src_fd = open(src,O_RDONLY);
+	int src_fd, dst_fd;
+	void *src_ptr, *dst_ptr;
+	if((src_fd = open(src,O_RDONLY)) < 0) return src_fd;
 	fstat(src_fd,&st);
-	int dst_fd = open(dst,O_WRONLY|O_CREAT|O_TRUNC,st.st_mode);
-	off_t offset = 0;
-	sendfile(dst_fd,src_fd,&offset,st.st_size);
+	if((dst_fd = open(dst,O_RDWR|O_CREAT|O_TRUNC,st.st_mode)) < 0) {
+		close(src_fd);
+		return dst_fd;
+	}
+	if((int)(src_ptr = mmap(0,st.st_size,PROT_READ,MAP_SHARED,src_fd,0)) < 0) {
+		close(dst_fd);
+		close(src_fd);
+		return (int)src_ptr;
+	}
+	if((int)(dst_ptr = mmap(0,st.st_size,PROT_WRITE,MAP_SHARED,dst_fd,0)) < 0) {
+		munmap(src_ptr,st.st_size);
+		close(dst_fd);
+		close(src_fd);
+		return (int)dst_ptr;
+	}
+	lseek(dst_fd,st.st_size-1,SEEK_SET);
+	write(dst_fd,"",1);
+	memcpy(dst_ptr,src_ptr,st.st_size);
+	munmap(dst_ptr,st.st_size);
+	munmap(src_ptr,st.st_size);
 	close(dst_fd);
 	close(src_fd);
 	return 0;
