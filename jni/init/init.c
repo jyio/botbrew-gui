@@ -367,6 +367,10 @@ int main(int argc, char *argv[]) {
 					return EXIT_FAILURE;
 				}
 				child_root = realpath(optarg,apath);
+				if(!child_root) {
+					fprintf(stderr,"whoops: `%s' does not exist\n",optarg);
+					return EXIT_FAILURE;
+				}
 				break;
 			case 'r':
 				remount = 1;
