@@ -309,7 +309,7 @@ static int copy(char *src, char *dst) {
 	struct stat st;
 	int src_fd = open(src,O_RDONLY);
 	fstat(src_fd,&st);
-	int dst_fd = open(dst,O_WRONLY|O_CREAT,st.st_mode);
+	int dst_fd = open(dst,O_WRONLY|O_CREAT|O_TRUNC,st.st_mode);
 	off_t offset = 0;
 	sendfile(dst_fd,src_fd,&offset,st.st_size);
 	close(dst_fd);
