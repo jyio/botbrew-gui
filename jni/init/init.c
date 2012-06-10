@@ -491,8 +491,8 @@ int main(int argc, char *argv[]) {
 		if(strcmp(argv[0],self) != 0) {
 			time_t mtime = stat(argv[0],&st)?0:st.st_mtime;
 			if(!stat(self,&st)) {
-				if((!S_ISDIR(st.st_mode))&&(st.st_mtime < mtime)) copy(argv[0],self);
-			} else copy(argv[0],self);
+				if((!S_ISDIR(st.st_mode))&&(st.st_mtime < mtime)) if(copy(argv[0],self) != 0) unlink(self);
+			} else if(copy(argv[0],self)) unlink(self);
 		}
 		// chmod copy
 		if(!stat(self,&st)) {
