@@ -58,6 +58,12 @@ static struct mountspec local_mounts[] = {
 	{NULL,NULL,NULL,0,NULL,0}
 };
 
+typedef struct mntent_node {
+	char *buf;
+	struct mntent *mnt;
+	struct mntent_node *next;
+} mntent_node;
+
 struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int buflen);
 
 static void usage(char *progname) {
@@ -300,8 +306,49 @@ static void mount_setup(char *target, int loopdev) {
 }
 
 static void mount_teardown(char *target, int loopdev) {
-	if(loopdev) loopdev_umount2(target,MNT_DETACH);
-	else umount2(target,MNT_DETACH);
+	FILE *fp = fopen("/proc/self/mounts","r");
+	if(fp) {
+		char *target_slash = strconcat(target,"/");
+		size_t target_slash_len = strlen(target_slash);
+		mntent_node *head = NULL, *node = (mntent_node*)malloc(sizeof(mntent_node));
+		char *buf = node->buf = (char*)malloc(3*PATH_MAX);
+		struct mntent *mnt = node->mnt = (struct mntent*)malloc(sizeof(struct mntent));
+		// iterate, building a reversed linked list of interesting mounts
+		while(mnt = getmntent_r(fp,mnt,buf,3*PATH_MAX)) {
+			if(strncmp(mnt->mnt_dir,target_slash,target_slash_len) == 0) {
+			} else if(strcmp(mnt->mnt_dir,target) == 0) {
+			} else continue;
+			node->mnt = mnt;
+			node->buf = buf;
+			node->next = head;
+			head = node;
+			node = (mntent_node*)malloc(sizeof(mntent_node));
+			buf = node->buf = (char*)malloc(3*PATH_MAX);
+			mnt = node->mnt = (struct mntent*)malloc(sizeof(struct mntent));
+		}
+		free(node->mnt);
+		free(node->buf);
+		free(node);
+		// iterate, unmounting and cleaning up
+		while(node = head) {
+			mnt = node->mnt;
+			if(
+				(strncmp(mnt->mnt_fsname,"/dev/block/loop",sizeof("/dev/block/loop")-1) == 0)||
+				(strncmp(mnt->mnt_fsname,"/dev/loop",sizeof("/dev/loop")-1) == 0)
+			) loopdev_umount2(mnt->mnt_dir,MNT_DETACH);
+			else umount2(mnt->mnt_dir,MNT_DETACH);
+			head = node->next;
+			free(node->mnt);
+			free(node->buf);
+			free(node);
+		}
+		free(target_slash);
+		fclose(fp);
+	} else {
+		// fallback (deprecated)
+		if(loopdev) loopdev_umount2(target,MNT_DETACH);
+		else umount2(target,MNT_DETACH);
+	}
 }
 
 static int copy(char *src, char *dst) {
