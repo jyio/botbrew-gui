@@ -8,6 +8,7 @@
 #include <sched.h>
 #include <errno.h>
 #include <mntent.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <sys/stat.h>
@@ -39,6 +40,7 @@ static struct mountspec foreign_mounts[] = {
 	{"/dev","/dev",NULL,MS_BIND|MS_REC,NULL,0},
 	{NULL,"/sys","sysfs",0,NULL,0},
 	{NULL,"/run","tmpfs",0,"size=10%,mode=0755",0},
+	{"/mnt","/mnt",NULL,MS_BIND|MS_REC,NULL,0},
 	{NULL,"/android","tmpfs",MS_NODEV|MS_NOEXEC|MS_NOATIME,"size=1M,mode=0755",0},
 	{"/cache","/android/cache",NULL,MS_BIND|MS_REC,NULL,0},
 	{"/data","/android/data",NULL,MS_BIND|MS_REC,NULL,0},
@@ -63,6 +65,13 @@ typedef struct mntent_node {
 	struct mntent *mnt;
 	struct mntent_node *next;
 } mntent_node;
+
+typedef struct mntent_dnode {
+	char *buf;
+	struct mntent *mnt;
+	struct mntent_dnode *prev;
+	struct mntent_dnode *next;
+} mntent_dnode;
 
 struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int buflen);
 
@@ -105,6 +114,23 @@ static char *strconcat(const char *a, const char *b) {
 	memcpy(res,a,len_a);
 	memcpy(res+len_a,b,len_b+1);	// includes null terminator
 	return res;
+}
+
+static void mkdir_p(const char *dir, mode_t mode) {
+	char *tmp = (char*)malloc(PATH_MAX), *p;
+	strcpy(tmp,dir);
+	size_t len = strlen(tmp);
+	while(tmp[len-1] == '/') {
+		tmp[len-1] = 0;
+		len--;
+	}
+	for(p = tmp+1; *p; p++) if(*p == '/') {
+		*p = 0;
+		mkdir(tmp,mode);
+		*p = '/';
+	}
+	mkdir(tmp,mode);
+	free(tmp);
 }
 
 static char *loopdev_get(const char *filepath) {
@@ -185,52 +211,83 @@ static int loopdev_umount2(const char *target, int flags) {
 	return -1;
 }
 
-static void dynamic_remount(const char *dst, ...) {
-	va_list args;
-	va_start(args,dst);
-	const char *name;
-	struct stat st;
-	char *dst_tmp = strconcat(dst,"/.tmp"), *dst_slash = strconcat(dst,"/"), *dst_mnt;
-	mkdir(dst_tmp,0755);
-	char *buf = (char*)malloc(PATH_MAX), *src_path, *src_real;
-	while(src_path = va_arg(args,char*)) {
-		if((stat(src_path,&st) != 0)||(!S_ISDIR(st.st_mode))) continue;
-		dst_mnt = strconcat(dst_slash,basename(src_path));
-		mkdir(dst_mnt,0755);
-		src_real = realpath(src_path,buf);
-		FILE *fp = fopen("/proc/self/mounts","r");
-		if(fp) {
-			struct mntent *mnt;
-			int mounted = 0;
-			while(mnt = getmntent(fp)) if((mnt->mnt_fsname[0] == '/')&&(strcmp(mnt->mnt_dir,src_real) == 0)) {
-				mounted = 1;
-				break;
-			}
-			fclose(fp);
-			if(mounted) {
-				mount(NULL,src_real,NULL,MS_SHARED|MS_REC,NULL);
-				if(mount(src_real,dst_tmp,NULL,MS_BIND|MS_REC,NULL) != 0) {
-					free(dst_mnt);
-					continue;
-				}
-			}
-			while(!umount2(src_real,MNT_DETACH));
-			mount(NULL,src_real,"tmpfs",0,"size=1,mode=0755");
-			mount(NULL,src_real,NULL,MS_SHARED,NULL);
-			mount(src_real,dst_mnt,NULL,MS_BIND,NULL);
-			mount(NULL,dst_mnt,NULL,MS_SLAVE,NULL);
-			if(mounted) {
-				mount(dst_tmp,src_real,NULL,MS_BIND|MS_REC,NULL);
-				umount2(dst_tmp,MNT_DETACH);
-			}
+static void dynamic_remount(const char *src, const char *tmp) {
+	FILE *fp = fopen("/proc/self/mounts","r");
+	if(fp) {
+		struct stat st;
+		char *buf = (char*)malloc(PATH_MAX);
+		char *src_real = realpath(src,buf);
+		char *src_slash = strconcat(src_real,"/");
+		size_t src_len = strlen(src_real);
+		size_t src_slash_len = src_len+1;
+		free(buf);
+		mntent_dnode *head = NULL, *node = (mntent_dnode*)malloc(sizeof(mntent_dnode));
+		mntent_dnode *tail = node;
+		buf = node->buf = (char*)malloc(3*PATH_MAX);
+		struct mntent *mnt = node->mnt = (struct mntent*)malloc(sizeof(struct mntent));
+		// set up staging area
+		mkdir(tmp,0755);
+		mount(NULL,tmp,"tmpfs",0,"size=1M");
+		// build linked list of interesting mounts
+		while(getmntent_r(fp,mnt,buf,3*PATH_MAX)) if(strncmp(mnt->mnt_dir,src_slash,src_slash_len) == 0) {
+			node->mnt = mnt;
+			node->buf = buf;
+			node->next = head;
+			if(head) head->prev = node;
+			head = node;
+			node = (mntent_dnode*)malloc(sizeof(mntent_dnode));
+			buf = node->buf = (char*)malloc(3*PATH_MAX);
+			mnt = node->mnt = (struct mntent*)malloc(sizeof(struct mntent));
 		}
-		free(dst_mnt);
+		fclose(fp);
+		free(node->mnt);
+		free(node->buf);
+		free(node);
+		free(src_slash);
+		head->prev = 0;
+		if(tail == node) tail = 0;
+		// iterate while setting up bind mounts
+		while(node = tail) {
+			mnt = node->mnt;
+			char *tmp_mnt = strconcat(tmp,mnt->mnt_dir+src_len);
+			mkdir_p(tmp_mnt,0755);
+			if(stat(mnt->mnt_dir,&st) == 0) chmod(tmp_mnt,st.st_mode);
+			mount(NULL,mnt->mnt_dir,NULL,MS_SHARED,NULL);
+			mount(mnt->mnt_dir,tmp_mnt,NULL,MS_BIND,NULL);
+			free(tmp_mnt);
+			tail = node->prev;
+		}
+		// iterate while unmounting and cleaning up
+		while(node = head) {
+			mnt = node->mnt;
+			mount(NULL,mnt->mnt_dir,NULL,MS_SLAVE,NULL);
+			umount2(mnt->mnt_dir,MNT_DETACH);
+			head = node->next;
+			free(node->mnt);
+			free(node->buf);
+			free(node);
+		}
+		// make sure subdirectories exist
+		DIR *dp = opendir(src);
+		if(dp) {
+			struct dirent *ep;
+			char *tmp_slash = strconcat(tmp,"/"), *tmp_path;
+			while(ep = readdir(dp)) if((ep->d_name[0] != '.')&&(stat(ep->d_name,&st) == 0)) {
+				tmp_path = strconcat(tmp_slash,ep->d_name);
+				mkdir(tmp_path,st.st_mode);
+				free(tmp_path);
+			}
+			closedir(dp);
+			free(tmp_slash);
+		}
+		// commit staging area
+		umount2(src,MNT_DETACH);
+		mount(NULL,tmp,NULL,MS_SHARED|MS_REC,NULL);
+		mount(tmp,src,NULL,MS_BIND|MS_REC,NULL);
+		mount(NULL,tmp,NULL,MS_SLAVE|MS_REC,NULL);
+		umount2(tmp,MNT_DETACH);
+		rmdir(tmp);
 	}
-	va_end(args);
-	free(buf);
-	free(dst_slash);
-	rmdir(dst_tmp);
-	free(dst_tmp);
 }
 
 static void fix_mnt_symlink(const char *src, const char *dst, ...) {
@@ -506,36 +563,19 @@ int main(int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 		// prepare dynamic mounts
-		mkdir("/data/.botbrew",0755);
-		mount(NULL,"/data/.botbrew","tmpfs",0,"size=1M");
-		dynamic_remount("/data/.botbrew","/emmc","/sdcard","/sdcard2","/usbdisk",NULL);
+		dynamic_remount("/mnt","/data/.botbrew");
 		if(loopmount) {
 			// perform loopback mount
 			if(loopdev_mount(loopmount,child_root,"ext4",0,NULL)) {
 				fprintf(stderr,"whoops: cannot mount `%s'\n",loopmount);
-				umount2("/data/.botbrew",MNT_DETACH);
-				rmdir("/data/.botbrew");
+			//	umount2("/data/.botbrew",MNT_DETACH);
+			//	rmdir("/data/.botbrew");
 				return EXIT_FAILURE;
 			}
 			loopmounted = 1;
 		}
 		// set up directory mappings
 		mount_setup(child_root,loopmounted);
-		// map dynamic mounts
-		char *child_mnt = strconcat(child_root,"/mnt");
-		unlink(child_mnt);
-		mkdir(child_mnt,0755);
-		mount(NULL,"/data/.botbrew",NULL,MS_SHARED|MS_REC,NULL);
-		mount("/data/.botbrew",child_mnt,NULL,MS_BIND|MS_REC,NULL);
-		mount(NULL,"/data/.botbrew",NULL,MS_UNBINDABLE|MS_REC,NULL);
-		umount2("/data/.botbrew",MNT_DETACH);
-		rmdir("/data/.botbrew");
-		free(child_mnt);
-		child_mnt = strconcat(child_root,"/data/.botbrew");
-		mount(NULL,child_mnt,NULL,MS_UNBINDABLE|MS_REC,NULL);
-		umount2(child_mnt,MNT_DETACH);
-		rmdir(child_mnt);
-		free(child_mnt);
 		// fix symlinks
 		fix_mnt_symlink("/mnt",child_root,"/emmc","/sdcard","/sdcard2","/usbdisk",NULL);
 		// copy self
