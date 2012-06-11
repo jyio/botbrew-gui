@@ -633,6 +633,7 @@ int main(int argc, char *argv[]) {
 	} else setenv("PATH",ENV_PATH":/android/sbin:/system/sbin:/system/bin:/system/xbin",1);
 	unsetenv("LD_LIBRARY_PATH");
 	setenv("BOTBREW_PREFIX",child_root,1);
+	if(loopmount) setenv("BOTBREW_IMAGE",loopmount,1);
 	// run specified command or /init.sh
 	if(child_argv == NULL) {
 		const char *argv0[2];
