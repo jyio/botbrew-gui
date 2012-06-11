@@ -228,6 +228,7 @@ static void dynamic_remount(const char *src, const char *tmp) {
 		// set up staging area
 		mkdir(tmp,0755);
 		mount(NULL,tmp,"tmpfs",0,"size=1M");
+		mount(NULL,tmp,NULL,MS_PRIVATE,NULL);
 		// build linked list of interesting mounts
 		while(getmntent_r(fp,mnt,buf,3*PATH_MAX)) if(strncmp(mnt->mnt_dir,src_slash,src_slash_len) == 0) {
 			node->mnt = mnt;
@@ -254,13 +255,13 @@ static void dynamic_remount(const char *src, const char *tmp) {
 			if(stat(mnt->mnt_dir,&st) == 0) chmod(tmp_mnt,st.st_mode);
 			mount(NULL,mnt->mnt_dir,NULL,MS_SHARED,NULL);
 			mount(mnt->mnt_dir,tmp_mnt,NULL,MS_BIND,NULL);
+			mount(NULL,mnt->mnt_dir,NULL,MS_SLAVE,NULL);
 			free(tmp_mnt);
 			tail = node->prev;
 		}
 		// iterate while unmounting and cleaning up
 		while(node = head) {
 			mnt = node->mnt;
-			mount(NULL,mnt->mnt_dir,NULL,MS_SLAVE,NULL);
 			umount2(mnt->mnt_dir,MNT_DETACH);
 			head = node->next;
 			free(node->mnt);
@@ -375,6 +376,7 @@ static void mount_teardown(char *target, int loopdev) {
 			if(strncmp(mnt->mnt_dir,target_slash,target_slash_len) == 0) {
 			} else if(strcmp(mnt->mnt_dir,target) == 0) {
 			} else continue;
+			mount(NULL,mnt->mnt_dir,NULL,MS_SLAVE,NULL);
 			node->mnt = mnt;
 			node->buf = buf;
 			node->next = head;
@@ -389,6 +391,7 @@ static void mount_teardown(char *target, int loopdev) {
 		// iterate, unmounting and cleaning up
 		while(node = head) {
 			mnt = node->mnt;
+			mount(NULL,mnt->mnt_dir,NULL,MS_SLAVE|MS_REC,NULL);
 			if(
 				(strncmp(mnt->mnt_fsname,"/dev/block/loop",sizeof("/dev/block/loop")-1) == 0)||
 				(strncmp(mnt->mnt_fsname,"/dev/loop",sizeof("/dev/loop")-1) == 0)
@@ -403,6 +406,7 @@ static void mount_teardown(char *target, int loopdev) {
 		fclose(fp);
 	} else {
 		// fallback (deprecated)
+		mount(NULL,target,NULL,MS_SLAVE|MS_REC,NULL);
 		if(loopdev) loopdev_umount2(target,MNT_DETACH);
 		else umount2(target,MNT_DETACH);
 	}
