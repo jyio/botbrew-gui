@@ -76,8 +76,8 @@ public class BotBrewApp extends Application {
 			}
 			p = Runtime.getRuntime().exec(new String[] {rootshell});
 			p_stdin = p.getOutputStream();
-			if(remount) p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'").getBytes());
-			else p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path_init.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
+			if(remount) p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'").getBytes());
+			else p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
 			p_stdin.close();
 			sinkError(p);
 			return p.waitFor() == 0;
