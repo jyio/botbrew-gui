@@ -575,6 +575,9 @@ int main(int argc, char *argv[]) {
 			loopmounted = 1;
 		}
 		// set up directory mappings
+		char *child_mnt = strconcat(child_root,"/mnt");
+		unlink(child_mnt);
+		free(child_mnt);
 		mount_setup(child_root,loopmounted);
 		// fix symlinks
 		fix_mnt_symlink("/mnt",child_root,"/emmc","/sdcard","/sdcard2","/usbdisk",NULL);
