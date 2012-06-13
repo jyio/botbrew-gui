@@ -88,14 +88,14 @@ public class BotBrewApp extends Application {
 			if((mntent != null)&&("vfat".equals(mntent.fs_vfstype))) return checkInstall(path,true);
 		} catch(FileNotFoundException ex) {}
 		try {
-			final Shell.Pipe sh = Shell.Pipe.getRootShell();
+			final Shell.Pipe sh = Shell.Pipe.getRootShell().redirect();
 			final OutputStream sh_stdin = sh.stdin();
 			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
 			final String path_init = (new File(path,"init")).getAbsolutePath();
 			sh_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
 			sh_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
 			sh_stdin.close();
-			sinkError(sh.proc);
+			sinkOutput(sh);
 			if(sh.waitFor() == 0) checkInstall(path,true);
 		} catch(IOException ex) {
 		} catch(InterruptedException ex) {

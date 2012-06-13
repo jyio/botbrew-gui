@@ -58,7 +58,7 @@ class RepairListLoader extends AsyncTaskLoader<ArrayList<String>> {
 				if((line.length() > 0)&&(line.indexOf(' ') < 0)) data.add(line);
 			}
 			p_stdout.close();
-			BotBrewApp.sinkError(sh.proc);
+			BotBrewApp.sinkError(sh);
 			sh.waitFor();
 		} catch(IOException ex) {
 		} catch(InterruptedException ex) {

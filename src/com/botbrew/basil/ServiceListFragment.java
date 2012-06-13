@@ -87,7 +87,7 @@ class ServiceListEntry implements Comparable {
 						}
 					}
 					p_stdout.close();
-					BotBrewApp.sinkError(sh.proc);
+					BotBrewApp.sinkError(sh);
 					sh.waitFor();
 				} catch(IOException ex) {
 				} catch(InterruptedException ex) {
@@ -151,11 +151,10 @@ class ServiceListAdapter extends ArrayAdapter<ServiceListEntry> {
 					@Override
 					public void run() {
 						try {
-							final Shell.Pipe sh = Shell.Pipe.getRootShell();
+							final Shell.Pipe sh = Shell.Pipe.getRootShell().redirect();
 							sh.botbrew(BotBrewApp.root.getAbsolutePath(),(checked?"svenable ":"svdisable ")+item.name);
 							sh.stdin().close();
-							BotBrewApp.sinkOutput(sh.proc);
-							BotBrewApp.sinkError(sh.proc);
+							BotBrewApp.sinkOutput(sh);
 							sh.waitFor();
 						} catch(IOException ex) {
 						} catch(InterruptedException ex) {
@@ -269,11 +268,10 @@ public class ServiceListFragment extends SherlockListFragment implements LoaderM
 			@Override
 			public void run() {
 				try {
-					final Shell.Pipe sh = Shell.Pipe.getRootShell();
+					final Shell.Pipe sh = Shell.Pipe.getRootShell().redirect();
 					sh.botbrew(BotBrewApp.root.getAbsolutePath(),cmd+name);
 					sh.stdin().close();
-					BotBrewApp.sinkOutput(sh.proc);
-					BotBrewApp.sinkError(sh.proc);
+					BotBrewApp.sinkOutput(sh);
 					sh.waitFor();
 				} catch(IOException ex) {
 				} catch(InterruptedException ex) {
