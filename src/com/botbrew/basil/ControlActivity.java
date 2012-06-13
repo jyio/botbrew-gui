@@ -20,7 +20,7 @@ public class ControlActivity extends SherlockPreferenceActivity {
 		((Button)findViewById(R.id.control_bootstrap)).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				startActivity((new Intent(ControlActivity.this,BootstrapReadyActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)));
+				startActivity((new Intent(ControlActivity.this,BootstrapActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)));
 				finish();
 			}
 		});

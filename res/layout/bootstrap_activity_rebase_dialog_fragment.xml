@@ -6,11 +6,6 @@
 	<TextView
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:textAppearance="?android:attr/textAppearanceLarge"
-		android:text="Whoa there." />
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
 		android:textAppearance="?android:attr/textAppearanceMedium"
 		android:text="I think you already have BotBrew set up at the location you specified:" />
 	<TextView

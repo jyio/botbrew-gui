@@ -3,26 +3,17 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="vertical">
+	<TextView
+		android:id="@+id/url"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:typeface="monospace" />
 	<ProgressBar
 		android:id="@+id/progress"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:indeterminate="true"
 		style="?android:attr/progressBarStyleHorizontal" />
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:textAppearance="?android:attr/textAppearanceLarge"
-		android:text="Here goes..." />
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:text="I'm downloading the base package." />
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:layout_weight="1" />
 	<TextView
 		android:id="@+id/fail"
 		android:layout_width="match_parent"
