@@ -34,7 +34,6 @@ public class BotBrewApp extends Application {
 	public static final String TAG = "BotBrew";
 	public static final String default_root = "/data/botbrew-basil";
 	public static File root;
-	public static String rootshell = (new File("/system/bin/su")).exists()?"/system/bin/su":"/system/xbin/su";
 	public boolean isInstalled(final File path) {
 		if(!path.isDirectory()) return false;
 		final File path_init = new File(path,"init");
@@ -48,39 +47,34 @@ public class BotBrewApp extends Application {
 		final File path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so"));
 		final File path_init = new File(path,"init");
 		final File path_img = new File(path,"fs.img");
-		Process p;
-		OutputStream p_stdin;
+		Shell sh;
 		try {
 			if((remount)||(!path_init.isFile())) {
-				p = Runtime.getRuntime().exec(new String[] {rootshell});
-				p_stdin = p.getOutputStream();
-				p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' --unmount").getBytes());
-				p_stdin.close();
-				sinkError(p);
-				if(p.waitFor() != 0) return false;
+				sh = Shell.Pipe.getRootShell().redirect();
+				sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' --unmount");
+				sh.stdin().close();
+				sinkOutput(sh);
+				if(sh.waitFor() != 0) return false;
 				if(path_init.isFile()) {
-					p = Runtime.getRuntime().exec(new String[] {rootshell});
-					p_stdin = p.getOutputStream();
-					p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
-					p_stdin.close();
-					sinkError(p);
-					return p.waitFor() == 0;
+					sh = Shell.Pipe.getRootShell().redirect();
+					sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''");
+					sh.stdin().close();
+					sinkOutput(sh);
+					return sh.waitFor() == 0;
 				} else if(path_img.isFile()) {
-					p = Runtime.getRuntime().exec(new String[] {rootshell});
-					p_stdin = p.getOutputStream();
-					p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path_img.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
-					p_stdin.close();
-					sinkError(p);
-					return p.waitFor() == 0;
+					sh = Shell.Pipe.getRootShell().redirect();
+					sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path_img.getAbsolutePath()+"' -- /system/bin/sh -c ''");
+					sh.stdin().close();
+					sinkOutput(sh);
+					return sh.waitFor() == 0;
 				} else return false;
 			}
-			p = Runtime.getRuntime().exec(new String[] {rootshell});
-			p_stdin = p.getOutputStream();
-			if(remount) p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'").getBytes());
-			else p_stdin.write(("exec '"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''").getBytes());
-			p_stdin.close();
-			sinkError(p);
-			return p.waitFor() == 0;
+			sh = Shell.Pipe.getRootShell().redirect();
+			if(remount) sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'");
+			else sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''");
+			sh.stdin().close();
+			sinkOutput(sh);
+			return sh.waitFor() == 0;
 		} catch(IOException ex) {
 			Log.v(TAG,"IOException");
 		} catch(InterruptedException ex) {
@@ -95,12 +89,12 @@ public class BotBrewApp extends Application {
 		} catch(FileNotFoundException ex) {}
 		try {
 			final Shell.Pipe sh = Shell.Pipe.getRootShell();
-			final OutputStream p_stdin = sh.stdin();
+			final OutputStream sh_stdin = sh.stdin();
 			final String path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so")).getAbsolutePath();
 			final String path_init = (new File(path,"init")).getAbsolutePath();
-			p_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
-			p_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
-			p_stdin.close();
+			sh_stdin.write(("cp '"+path_init_src+"' '"+path_init+"'\n").getBytes());
+			sh_stdin.write(("chmod 4755 '"+path_init+"'\n").getBytes());
+			sh_stdin.close();
 			sinkError(sh.proc);
 			if(sh.waitFor() == 0) checkInstall(path,true);
 		} catch(IOException ex) {
@@ -110,12 +104,11 @@ public class BotBrewApp extends Application {
 	}
 	public boolean clean() {
 		try {
-			final Process p = Runtime.getRuntime().exec(new String[] {rootshell});
-			final OutputStream p_stdin = p.getOutputStream();
-			p_stdin.write(("exec '"+root.getAbsolutePath()+"/init' -- apt-get clean").getBytes());
-			p_stdin.close();
-			sinkError(p);
-			return (p.waitFor() == 0);
+			final Shell sh = Shell.Pipe.getRootShell().redirect();
+			sh.botbrew(root.getCanonicalPath(),"apt-get clean");
+			sh.stdin().close();
+			sinkOutput(sh);
+			return (sh.waitFor() == 0);
 		} catch(IOException ex) {
 		} catch(InterruptedException ex) {
 		}

@@ -1,15 +1,12 @@
 package com.botbrew.basil;
 
-import jackpal.androidterm.Exec;
 import jackpal.androidterm.emulatorview.ColorScheme;
 import jackpal.androidterm.emulatorview.EmulatorView;
 import jackpal.androidterm.emulatorview.TermSession;
 
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +25,6 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 public class BootstrapInstallActivity extends SherlockFragmentActivity {
 	private BotBrewApp mApp;
-	private FileDescriptor mFD;
-	private FileOutputStream mFDstdin;
-	private FileInputStream mFDstdout;
-	private int mPID;
 	private TermSession mTermSession;
 	private boolean mLocked = false;
 	@Override
@@ -52,23 +45,20 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 		final boolean loop = getIntent().getBooleanExtra("loop",false);
 		final File archive = new File(getCacheDir(),loop?"img.zip":"pkg.zip");
 		final String cmd = archive.getAbsolutePath();
-		int[] pid = new int[] {0};
-		mFD = Exec.createSubprocess(BotBrewApp.rootshell,new String[] {BotBrewApp.rootshell},new String[] {"PATH="+System.getenv("PATH"),"TERM=vt100"},pid);
-		mFDstdin = new FileOutputStream(mFD);
-		mFDstdout = new FileInputStream(mFD);
-		mPID = pid[0];
-		ColorScheme scheme = new ColorScheme(7,0xffffffff,0,0xff000000);
-		mTermSession = new TermSession();
-		mTermSession.setColorScheme(scheme);
-		mTermSession.setTermOut(mFDstdin);
-		mTermSession.setTermIn(mFDstdout);
 		try {
-			mFDstdin.write(("set -e\n").getBytes());
-			mFDstdin.write(("chmod 0755 '"+cmd+"'\n").getBytes());
-			for(String mkdir: mkdir_p(new File(file))) mFDstdin.write(("mkdir '"+mkdir+"'\n").getBytes());
-			mFDstdin.write(("cd '"+file+"'\n").getBytes());
-			mFDstdin.write(("'"+cmd+"' -n\n").getBytes());
-			mFDstdin.write(("exit\n").getBytes());
+			final Shell.Term sh = Shell.Term.getRootShell();
+			final OutputStream sh_stdin = sh.stdin();
+			mTermSession = new TermSession();
+			mTermSession.setColorScheme(new ColorScheme(7,0xffffffff,0,0xff000000));
+			mTermSession.setTermOut(sh_stdin);
+			mTermSession.setTermIn(sh.stdout());
+			sh_stdin.write(("set -e\n").getBytes());
+			sh_stdin.write(("chmod 0755 '"+cmd+"'\n").getBytes());
+			for(String mkdir: mkdir_p(new File(file))) sh_stdin.write(("mkdir '"+mkdir+"'\n").getBytes());
+			sh_stdin.write(("cd '"+file+"'\n").getBytes());
+			sh_stdin.write(("'"+cmd+"' -n\n").getBytes());
+			sh_stdin.write(("exit\n").getBytes());
+			sh_stdin.close();
 			EmulatorView emulator = (EmulatorView)findViewById(R.id.emulator);
 			emulator.attachSession(mTermSession);
 			emulator.setDensity(getResources().getDisplayMetrics());
@@ -85,10 +75,14 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 				@Override
 				protected Integer doInBackground(final Void... ign) {
 					mLocked = true;
-					int res = Exec.waitFor(mPID);
-					archive.delete();
-					((BotBrewApp)getApplicationContext()).nativeInstall(new File(file));
-					return res;
+					try {
+						int res = sh.waitFor();
+						archive.delete();
+						((BotBrewApp)getApplicationContext()).nativeInstall(new File(file));
+						return res;
+					} catch(InterruptedException ex) {
+					}
+					return -1;
 				}
 				@Override
 				protected void onCancelled(Integer result) {
@@ -111,8 +105,6 @@ public class BootstrapInstallActivity extends SherlockFragmentActivity {
 				}
 			}).execute();
 		} catch(IOException ex) {
-			Exec.hangupProcessGroup(mPID);
-			Exec.close(mFD);
 			findViewById(R.id.fail).setVisibility(View.VISIBLE);
 			findViewById(R.id.retry).setVisibility(View.VISIBLE);
 		}
