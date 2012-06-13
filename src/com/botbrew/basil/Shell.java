@@ -108,8 +108,17 @@ public abstract class Shell {
 		return botbrew(true,root,cmd);
 	}
 	public Shell botbrew(final boolean exec, final CharSequence root, final CharSequence cmd) throws IOException {
-		if(exec) in.write(("exec "+root+"/init -- "+cmd+"\n").getBytes());
-		else in.write((root+"/init -- "+cmd+"\n").getBytes());
+		if(exec) in.write(("exec '"+root+"/init' -- "+cmd+"\n").getBytes());
+		else in.write(("'"+root+"/init' -- "+cmd+"\n").getBytes());
+		in.flush();
+		return this;
+	}
+	public Shell botbrew(final CharSequence init, final CharSequence root, final CharSequence cmd) throws IOException {
+		return botbrew(true,init,root,cmd);
+	}
+	public Shell botbrew(final boolean exec, final CharSequence init, final CharSequence root, final CharSequence cmd) throws IOException {
+		if(exec) in.write(("exec '"+init+"' --target '"+root+"' -- "+cmd+"\n").getBytes());
+		else in.write(("'"+init+"' --target '"+root+"' -- "+cmd+"\n").getBytes());
 		in.flush();
 		return this;
 	}

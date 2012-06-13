@@ -57,21 +57,21 @@ public class BotBrewApp extends Application {
 				if(sh.waitFor() != 0) return false;
 				if(path_init.isFile()) {
 					sh = Shell.Pipe.getRootShell().redirect();
-					sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''");
+					sh.botbrew(path_init_src.getAbsolutePath(),path.getAbsolutePath(),"/system/bin/sh -c ''");
 					sh.stdin().close();
 					sinkOutput(sh);
 					return sh.waitFor() == 0;
 				} else if(path_img.isFile()) {
 					sh = Shell.Pipe.getRootShell().redirect();
-					sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path_img.getAbsolutePath()+"' -- /system/bin/sh -c ''");
+					sh.botbrew(path_init_src.getAbsolutePath(),path_img.getAbsolutePath(),"/system/bin/sh -c ''");
 					sh.stdin().close();
 					sinkOutput(sh);
 					return sh.waitFor() == 0;
 				} else return false;
 			}
 			sh = Shell.Pipe.getRootShell().redirect();
-			if(remount) sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'");
-			else sh.exec("'"+path_init_src.getAbsolutePath()+"' --target '"+path.getAbsolutePath()+"' -- /system/bin/sh -c ''");
+			if(remount) sh.botbrew(path_init_src.getAbsolutePath(),path.getAbsolutePath(),"/system/bin/sh -c 'rm -rf /var/run /tmp /var/lock /botbrew/tmp; ln -s ../run /var/run; ln -s run/tmp /tmp; ln -s ../run/lock /var/lock; ln -s run/tmp /botbrew/tmp'");
+			else sh.botbrew(path_init_src.getAbsolutePath(),path.getAbsolutePath(),"/system/bin/sh -c ''");
 			sh.stdin().close();
 			sinkOutput(sh);
 			return sh.waitFor() == 0;
