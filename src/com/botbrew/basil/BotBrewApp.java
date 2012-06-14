@@ -11,11 +11,13 @@ import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.StatFs;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
@@ -144,13 +146,12 @@ public class BotBrewApp extends Application {
 		}
 		return false;
 	}
-	public boolean unmount(final File path) {
-		if(!path.isDirectory()) return false;
+	public boolean unmount(final String path) {
 		final File path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so"));
 		Shell sh;
 		try {
 			sh = Shell.Pipe.getRootShell().redirect();
-			sh.exec("'"+path_init_src.getCanonicalPath()+"' --target '"+path.getCanonicalPath()+"' --unmount");
+			sh.exec("'"+path_init_src.getCanonicalPath()+"' --target '"+path+"' --unmount");
 			sh.stdin().close();
 			sinkOutput(sh);
 			return sh.waitFor() == 0;
@@ -160,6 +161,14 @@ public class BotBrewApp extends Application {
 			Log.v(TAG,"InterruptedException");
 		}
 		return false;
+	}
+	public boolean unmount(final File path) {
+		if(!path.isDirectory()) return false;
+		try {
+			return unmount(path.getCanonicalPath());
+		} catch(IOException ex) {
+			return unmount(path.getAbsolutePath());
+		}
 	}
 	public boolean isOnline() {
 		NetworkInfo ni = ((ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
