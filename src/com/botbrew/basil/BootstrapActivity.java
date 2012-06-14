@@ -198,7 +198,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						editor.putString("var_root",path);
 						editor.commit();
 						getDialog().dismiss();
-						startActivity((new Intent(getActivity(),Main.class)).putExtra("update",true));
+						startActivity(new Intent(getActivity(),Main.class));
 						getActivity().finish();
 					}
 				}).execute();
@@ -236,7 +236,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					editor.putString("var_root",path);
 					editor.commit();
 					getDialog().dismiss();
-					startActivity(IntentType.APP_RESTART.intent(getActivity(),Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra("update",true));
+					startActivity(IntentType.APP_RESTART.intent(getActivity(),Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 					getActivity().finish();
 				}
 			});

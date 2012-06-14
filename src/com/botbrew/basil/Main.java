@@ -7,19 +7,13 @@ import java.util.Vector;
 
 import android.app.ProgressDialog;
 import android.app.SearchManager;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -123,15 +117,11 @@ public class Main extends SherlockFragmentActivity {
 					List<String> path = data.getPathSegments();
 					startActivity((new Intent(this,PackageManagerActivity.class)).putExtra("command","info").putExtra("package",path.get(path.size()-1)));
 				} else {	// maybe android.intent.category.BROWSABLE
-				//	verifyChecksum();
 					if((new File(data.getPath())).exists()) DebInstallDialogFragment.create(data).show(getSupportFragmentManager(),null);
 				}
 			}
 		} else if(Intent.ACTION_SEARCH.equals(action)) {
-		//	verifyChecksum();
 			startActivity((new Intent(this,PackageManagerActivity.class)).putExtra("command","info").putExtra("package",intent.getStringExtra(SearchManager.QUERY)));
-		} else {
-		//	verifyChecksum();
 		}
 		if(Intent.ACTION_MAIN.equals(action)) {
 			boolean firstrun = false;
@@ -153,10 +143,6 @@ public class Main extends SherlockFragmentActivity {
 					}
 				},0);
 			}
-		}
-		if(intent.getBooleanExtra("update",false)) {
-			onRefreshRequested(true);
-			intent.removeExtra("update");
 		}
 	}
 	@Override
