@@ -22,8 +22,10 @@ import com.botbrew.basil.Shell.Pipe;
 
 class RepairListLoader extends AsyncTaskLoader<ArrayList<String>> {
 	private ArrayList<String> mData;
+	private BotBrewApp mApplication;
 	public RepairListLoader(Context ctx) {
 		super(ctx);
+		mApplication = (BotBrewApp)ctx.getApplicationContext();
 	}
 	@Override
 	public void onStartLoading() {
@@ -49,7 +51,7 @@ class RepairListLoader extends AsyncTaskLoader<ArrayList<String>> {
 	public ArrayList<String> loadInBackground() {	// called from AsyncTask
 		ArrayList<String> data = new ArrayList<String>();
 		try {
-			final Shell.Pipe sh = (Pipe)Shell.Pipe.getUserShell().botbrew(BotBrewApp.root.getAbsolutePath(),"reinstdb broken");
+			final Shell.Pipe sh = (Pipe)Shell.Pipe.getUserShell().botbrew(mApplication.root(),"reinstdb broken");
 			sh.stdin().close();
 			final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(sh.stdout()));
 			String line;

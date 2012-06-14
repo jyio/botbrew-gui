@@ -143,7 +143,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			final File archive = new File(getCacheDir(),loop?"img.zip":"pkg.zip");
 			final String cmd = archive.getAbsolutePath();
 			try {
-				((BotBrewApp)getApplicationContext()).unmount(BotBrewApp.root);
+				((BotBrewApp)getApplicationContext()).unmount();
 				final Shell.Term sh = Shell.Term.getRootShell();
 				final OutputStream sh_stdin = sh.stdin();
 				final TermSession termsession = new TermSession();
@@ -233,7 +233,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				@Override
 				public void onClick(View v) {
 					final BotBrewApp app = (BotBrewApp)getApplicationContext();
-					app.unmount(BotBrewApp.root);
+					app.unmount();
 					app.nativeInstall(new File(path));
 					final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 					final SharedPreferences.Editor editor = pref.edit();

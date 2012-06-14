@@ -1,7 +1,6 @@
 package com.botbrew.basil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
@@ -102,8 +101,7 @@ public class Main extends SherlockFragmentActivity {
 			return;
 		}
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-		BotBrewApp.root = new File(pref.getString("var_root",BotBrewApp.default_root));
-		if(!mApplication.checkInstall(BotBrewApp.root,false)) {
+		if(!mApplication.checkInstall(new File(mApplication.root()),false)) {
 			startActivity((new Intent(this,BootstrapActivity.class)).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 			finish();
 			return;
@@ -132,7 +130,7 @@ public class Main extends SherlockFragmentActivity {
 					SharedPreferences.Editor editor = pref.edit();
 					editor.putLong("var_lastversion",version);
 					editor.commit();
-					mApplication.nativeInstall(BotBrewApp.root);
+					mApplication.nativeInstall(new File(mApplication.root()));
 				}
 			} catch(PackageManager.NameNotFoundException ex) {}	// wtf
 			if((firstrun)||(pref.getBoolean("interface_launch_webactivity",false))) {
@@ -179,26 +177,23 @@ public class Main extends SherlockFragmentActivity {
 	public void onResume() {
 		super.onResume();
 		try {
-			final String path = BotBrewApp.root.getCanonicalPath();
+			final String path = mApplication.root();
 			freespace.setText(Formatter.formatFileSize(this,BotBrewApp.getFreeBytes(path))+"/"+Formatter.formatFileSize(this,BotBrewApp.getByteCount(path))+" free in "+path);
-		} catch(IOException ex) {
-			freespace.setText(BotBrewApp.root.getAbsolutePath());
 		} catch(RuntimeException ex) {
 			freespace.setText("not bootstrapped");
 		}
-		if(BotBrewApp.root != null) conditionalRefresh(true);
+		conditionalRefresh(true);
 	}
 	@Override
 	public void onBackPressed() {
 		if(!mLocked) super.onBackPressed();
 	}
 	protected void onRefreshRequested(final boolean update) {
-		if(BotBrewApp.root == null) return;
 		final ProgressDialog pd = ProgressDialog.show(this,"Please wait...","Updating the package cache...");
 		pd.setCancelable(false);
 		PreferenceManager.setDefaultValues(this,R.xml.preference,false);
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-		final DebianPackageManager dpm = new DebianPackageManager(BotBrewApp.root.getAbsolutePath());
+		final DebianPackageManager dpm = new DebianPackageManager(mApplication.root());
 		dpm.config(pref);
 		(new AsyncTask<Void,Void,Boolean>() {
 			@Override
@@ -222,8 +217,8 @@ public class Main extends SherlockFragmentActivity {
 			@Override
 			protected void onPostExecute(Boolean result) {
 				final SharedPreferences.Editor editor = pref.edit();
-				editor.putLong("var_dbChecksumSource",BotBrewApp.checksumSource());
-				editor.putLong("var_dbChecksumCache",BotBrewApp.checksumCache());
+				editor.putLong("var_dbChecksumSource",mApplication.checksumSource());
+				editor.putLong("var_dbChecksumCache",mApplication.checksumCache());
 				editor.commit();
 				mLocked = false;
 				try {
@@ -236,11 +231,11 @@ public class Main extends SherlockFragmentActivity {
 	}
 	protected boolean conditionalRefresh(final boolean update) {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-		if((update)&&(BotBrewApp.checksumSource() != pref.getLong("var_dbChecksumSource",-1))) {
+		if((update)&&(mApplication.checksumSource() != pref.getLong("var_dbChecksumSource",-1))) {
 			onRefreshRequested(true);
 			return true;
 		}
-		if(BotBrewApp.checksumCache() != pref.getLong("var_dbChecksumCache",-1)) {
+		if(mApplication.checksumCache() != pref.getLong("var_dbChecksumCache",-1)) {
 			onRefreshRequested(false);
 			return true;
 		}

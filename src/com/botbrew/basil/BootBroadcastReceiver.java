@@ -13,12 +13,11 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
 	public void onReceive(final Context context, final Intent intent) {
 		PreferenceManager.setDefaultValues(context,R.xml.preference,false);
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-		BotBrewApp.root = new File(pref.getString("var_root",BotBrewApp.default_root));
 		if(pref.getBoolean("boot_initialize",true)) (new Thread(new Runnable() {
 			@Override
 			public void run() {
 				final BotBrewApp app = (BotBrewApp)context.getApplicationContext();
-				if((app.checkInstall(BotBrewApp.root,false))&&(pref.getBoolean("boot_supervisor",false))) context.startService(new Intent(context,SupervisorService.class));
+				if((app.checkInstall(new File(app.root()),false))&&(pref.getBoolean("boot_supervisor",false))) context.startService(new Intent(context,SupervisorService.class));
 			}
 		})).start();
 	}

@@ -42,11 +42,11 @@ public class ControlActivity extends SherlockPreferenceActivity {
 				startActivity((new Intent(this,Main.class)).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 				return true;
 			case R.id.menu_restart:
-				((BotBrewApp)getApplicationContext()).unmount(BotBrewApp.root);
+				((BotBrewApp)getApplicationContext()).unmount();
 				startActivity(IntentType.APP_RESTART.intent(this,Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 				return true;
 			case R.id.menu_exit:
-				((BotBrewApp)getApplicationContext()).unmount(BotBrewApp.root);
+				((BotBrewApp)getApplicationContext()).unmount();
 				startActivity(IntentType.APP_EXIT.intent(this,Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 				return true;
 		}

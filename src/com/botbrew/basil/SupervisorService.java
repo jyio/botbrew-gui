@@ -26,7 +26,9 @@ public class SupervisorService extends Service {
 		}
 		@Override
 		public void run() {
-			if(!((BotBrewApp)getApplicationContext()).isInstalled(BotBrewApp.root)) {
+			final BotBrewApp app = (BotBrewApp)getApplicationContext();
+			final String root = app.root();
+			if(!app.isInstalled()) {
 				Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): cannot start supervisor");
 				return;
 			}
@@ -34,7 +36,7 @@ public class SupervisorService extends Service {
 			Shell.Pipe sh = null;
 			try {
 				sh = Shell.Pipe.getRootShell();
-				sh.botbrew(BotBrewApp.root.getAbsolutePath(),"runsvdir -P /etc/service 'log: ................................................................................................................................................................................................................................................................'");
+				sh.botbrew(root,"runsvdir -P /etc/service 'log: ................................................................................................................................................................................................................................................................'");
 				sh.stdin().close();
 				sh.waitFor();
 			} catch(IOException ex) {
@@ -72,11 +74,10 @@ public class SupervisorService extends Service {
 				if(exited) {	// the process does not exist, so clean up offline
 					try {
 						Log.v(BotBrewApp.TAG,"SupervisorProcess.run(): sending SIGTERM to runsv...");
-						final String bbroot = BotBrewApp.root.getAbsolutePath();
 						sh = Shell.Pipe.getRootShell();
-						sh.botbrew(false,bbroot,"killall -1 runsvdir || true\nkillall -15 runsv || true");
-						String[] enabled = (new File(BotBrewApp.root,"etc/service")).list();
-						if(enabled != null) for(String filename: enabled) sh.botbrew(false,bbroot,"sv exit "+filename+" || true");
+						sh.botbrew(false,root,"killall -1 runsvdir || true\nkillall -15 runsv || true");
+						String[] enabled = (new File(root,"etc/service")).list();
+						if(enabled != null) for(String filename: enabled) sh.botbrew(false,root,"sv exit "+filename+" || true");
 						sh.stdin().close();
 						sh.waitFor();
 					} catch(IOException ex) {

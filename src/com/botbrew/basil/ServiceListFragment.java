@@ -34,8 +34,10 @@ import com.actionbarsherlock.app.SherlockListFragment;
 class ServiceListEntry implements Comparable {
 	public static class Loader extends AsyncTaskLoader<ArrayList<ServiceListEntry>> {
 		private ArrayList<ServiceListEntry> mData;
+		private BotBrewApp mApplication;
 		public Loader(Context ctx) {
 			super(ctx);
+			mApplication = (BotBrewApp)ctx.getApplicationContext();
 		}
 		@Override
 		public void onStartLoading() {
@@ -59,6 +61,7 @@ class ServiceListEntry implements Comparable {
 		}
 		@Override
 		public ArrayList<ServiceListEntry> loadInBackground() {	// called from AsyncTask
+			final String root = mApplication.root();
 			ArrayList<ServiceListEntry> data = new ArrayList<ServiceListEntry>();
 			HashSet<String> done = new HashSet<String>();
 			Pattern re_status = Pattern.compile("^([^\\:]+)\\: ([^\\:]+)");
@@ -66,7 +69,7 @@ class ServiceListEntry implements Comparable {
 			Shell.Pipe sh;
 			String line;
 			String name;
-			String[] svcs = (new File(BotBrewApp.root,"etc/service")).list();
+			String[] svcs = (new File(root,"etc/service")).list();
 			if((svcs != null)&&(svcs.length > 0)) {
 				try {
 					final StringBuffer sb = new StringBuffer("sv status");
@@ -75,7 +78,7 @@ class ServiceListEntry implements Comparable {
 						sb.append(svc);
 					}
 					sh = Shell.Pipe.getRootShell();
-					sh.botbrew(BotBrewApp.root.getAbsolutePath(),sb.toString());
+					sh.botbrew(root,sb.toString());
 					sh.stdin().close();
 					final BufferedReader p_stdout = new BufferedReader(new InputStreamReader(sh.stdout()));
 					while((line = p_stdout.readLine()) != null) {
@@ -93,7 +96,7 @@ class ServiceListEntry implements Comparable {
 				} catch(InterruptedException ex) {
 				}
 			}
-			svcs = (new File(BotBrewApp.root,"etc/sv")).list();
+			svcs = (new File(root,"etc/sv")).list();
 			if(svcs != null) {
 				String d_status = "off";
 				String d_detail = "this service is disabled";
@@ -126,9 +129,11 @@ class ServiceListEntry implements Comparable {
 
 class ServiceListAdapter extends ArrayAdapter<ServiceListEntry> {
 	private final LayoutInflater mInflater;
+	private BotBrewApp mApplication;
 	public ServiceListAdapter(Context context) {
 		super(context,R.layout.service_list_item);
 		mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		mApplication = (BotBrewApp)context.getApplicationContext();
 	}
 	public void setData(ArrayList<ServiceListEntry> data) {
 		clear();
@@ -152,7 +157,7 @@ class ServiceListAdapter extends ArrayAdapter<ServiceListEntry> {
 					public void run() {
 						try {
 							final Shell.Pipe sh = Shell.Pipe.getRootShell().redirect();
-							sh.botbrew(BotBrewApp.root.getAbsolutePath(),(checked?"svenable ":"svdisable ")+item.name);
+							sh.botbrew(mApplication.root(),(checked?"svenable ":"svdisable ")+item.name);
 							sh.stdin().close();
 							BotBrewApp.sinkOutput(sh);
 							sh.waitFor();
@@ -172,9 +177,11 @@ class ServiceListAdapter extends ArrayAdapter<ServiceListEntry> {
 public class ServiceListFragment extends SherlockListFragment implements LoaderManager.LoaderCallbacks<ArrayList<ServiceListEntry>> {
 	private static final int LOADER_ID = 0x02;
 	private ServiceListAdapter adapter;
+	private BotBrewApp mApplication;
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		mApplication = (BotBrewApp)getActivity().getApplicationContext();
 		setEmptyText("No services");
 		adapter = new ServiceListAdapter(getActivity());
 		registerForContextMenu(getListView());
@@ -269,7 +276,7 @@ public class ServiceListFragment extends SherlockListFragment implements LoaderM
 			public void run() {
 				try {
 					final Shell.Pipe sh = Shell.Pipe.getRootShell().redirect();
-					sh.botbrew(BotBrewApp.root.getAbsolutePath(),cmd+name);
+					sh.botbrew(mApplication.root(),cmd+name);
 					sh.stdin().close();
 					BotBrewApp.sinkOutput(sh);
 					sh.waitFor();

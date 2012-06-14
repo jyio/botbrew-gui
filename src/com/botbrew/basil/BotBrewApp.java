@@ -35,7 +35,26 @@ import android.view.inputmethod.InputMethodManager;
 public class BotBrewApp extends Application {
 	public static final String TAG = "BotBrew";
 	public static final String default_root = "/data/botbrew-basil";
-	public static File root;
+	public String root() {
+		return PreferenceManager.getDefaultSharedPreferences(this).getString("var_root",default_root);
+	}
+	public void root(final String s) {
+		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+		if(!pref.getString("var_root",default_root).equals(s)) {
+			unmount(s);
+			final SharedPreferences.Editor editor = pref.edit();
+			editor.putString("var_root",s);
+			editor.remove("var_dbChecksumCache");
+			editor.commit();
+		}
+	}
+	public void root(final File f) {
+		try {
+			root(f.getCanonicalPath());
+		} catch(IOException ex) {
+			root(f.getAbsolutePath());
+		}
+	}
 	public boolean isInstalled(final File path) {
 		if(!path.isDirectory()) return false;
 		final File path_init = new File(path,"init");
@@ -43,6 +62,9 @@ public class BotBrewApp extends Application {
 		final File path_img = new File(path,"fs.img");
 		if(path_img.isFile()) return checkInstall(path,true);
 		return false;
+	}
+	public boolean isInstalled() {
+		return isInstalled(new File(root()));
 	}
 	public boolean checkInstall(final File path, final boolean remount) {
 		if(!path.isDirectory()) return false;
@@ -107,7 +129,7 @@ public class BotBrewApp extends Application {
 	public boolean clean() {
 		try {
 			final Shell sh = Shell.Pipe.getRootShell().redirect();
-			sh.botbrew(root.getCanonicalPath(),"apt-get clean");
+			sh.botbrew(root(),"apt-get clean");
 			sh.stdin().close();
 			sinkOutput(sh);
 			return (sh.waitFor() == 0);
@@ -118,7 +140,7 @@ public class BotBrewApp extends Application {
 	}
 	public File textEdit(final File path) {
 		try {
-			final String root = BotBrewApp.root.getCanonicalPath();
+			final String root = root();
 			final File tmp = File.createTempFile("editor-"+path.getName().replace('.','-'),".tmp",getCacheDir());
 			final Shell sh = Shell.Pipe.getRootShell();
 			sh.botbrew(false,root,"cp '"+path+"' '"+tmp+"'");
@@ -134,7 +156,7 @@ public class BotBrewApp extends Application {
 	}
 	public boolean textCommit(final File path, final File tmp) {
 		try {
-			final String root = BotBrewApp.root.getCanonicalPath();
+			final String root = root();
 			final Shell sh = Shell.Pipe.getRootShell();
 			sh.botbrew(false,root,"cp '"+tmp+"' '"+path+"'");
 			sh.botbrew(root,"rm '"+tmp+"'");
@@ -170,6 +192,9 @@ public class BotBrewApp extends Application {
 			return unmount(path.getAbsolutePath());
 		}
 	}
+	public boolean unmount() {
+		return unmount(root());
+	}
 	public boolean isOnline() {
 		NetworkInfo ni = ((ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
 		if((ni != null)&&(ni.isConnected())) return true;
@@ -193,13 +218,15 @@ public class BotBrewApp extends Application {
 		StatFs stat = new StatFs(path);
 		return ((long)stat.getAvailableBlocks())*stat.getBlockSize();
 	}
-	public static long checksumSource() {
+	public long checksumSource() {
+		final String root = root();
 		long total = (new File(root,"etc/apt/sources.list")).lastModified();
 		final File[] items = (new File(root,"etc/apt/sources.list.d")).listFiles();
 		if(items != null) for(File item: items) total += item.lastModified();
 		return total;
 	}
-	public static long checksumCache() {
+	public long checksumCache() {
+		final String root = root();
 		long total = (new File(root,"var/lib/dpkg/status")).lastModified();
 		final File[] items = (new File(root,"var/lib/apt/lists")).listFiles();
 		if(items != null) for(File item: items) total += item.lastModified();
