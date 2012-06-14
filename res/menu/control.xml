@@ -1,3 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item
+		android:id="@+id/menu_restart"
+		android:title="Restart"
+		android:orderInCategory="0"
+		android:showAsAction="ifRoom" />
+	<item
+		android:id="@+id/menu_exit"
+		android:title="Exit"
+		android:orderInCategory="1"
+		android:showAsAction="ifRoom" />
 </menu>
