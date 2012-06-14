@@ -18,7 +18,7 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
 			@Override
 			public void run() {
 				final BotBrewApp app = (BotBrewApp)context.getApplicationContext();
-				if((app.checkInstall(BotBrewApp.root,false))&&(pref.getBoolean("boot_supervisor",true))) context.startService(new Intent(context,SupervisorService.class));
+				if((app.checkInstall(BotBrewApp.root,false))&&(pref.getBoolean("boot_supervisor",false))) context.startService(new Intent(context,SupervisorService.class));
 			}
 		})).start();
 	}
