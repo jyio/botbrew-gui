@@ -86,6 +86,12 @@
 		<meta-data
 			android:name="android.app.default_searchable"
 			android:value=".Main" />
+		<!-- Boot broadcast. -->
+		<receiver android:name=".BootBroadcastReceiver">
+			<intent-filter>
+				<action android:name ="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+		</receiver>
 		<!-- ACRA error reports. -->
 		<activity android:name="org.acra.CrashReportDialog"
 			android:theme="@style/Theme.Sherlock.Dialog"
