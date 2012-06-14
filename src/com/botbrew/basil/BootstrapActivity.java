@@ -196,6 +196,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 						SharedPreferences.Editor editor = pref.edit();
 						editor.putString("var_root",path);
+						editor.remove("var_dbChecksumCache");
 						editor.commit();
 						getDialog().dismiss();
 						startActivity(new Intent(getActivity(),Main.class));
@@ -234,6 +235,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 					final SharedPreferences.Editor editor = pref.edit();
 					editor.putString("var_root",path);
+					editor.remove("var_dbChecksumCache");
 					editor.commit();
 					getDialog().dismiss();
 					startActivity(IntentType.APP_RESTART.intent(getActivity(),Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
