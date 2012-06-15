@@ -12,6 +12,7 @@ import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
 import android.app.Application;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
@@ -175,6 +176,7 @@ public class BotBrewApp extends Application {
 		return false;
 	}
 	public boolean unmount(final String path) {
+		stopService(new Intent(this,SupervisorService.class));
 		final File path_init_src = (new File(new File(getCacheDir().getParent(),"lib"),"libinit.so"));
 		Shell sh;
 		try {
