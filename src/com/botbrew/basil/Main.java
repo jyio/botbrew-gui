@@ -170,6 +170,9 @@ public class Main extends SherlockFragmentActivity {
 			case R.id.menu_clean:
 				Toast.makeText(this,mApplication.clean()?"Archives cleaned.":"Archives already clean.",Toast.LENGTH_SHORT).show();
 				return true;
+			case R.id.menu_run:
+				startActivity(new Intent(this,TerminalActivity.class));
+				return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}

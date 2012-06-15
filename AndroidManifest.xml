@@ -76,6 +76,9 @@
 		<activity
 			android:name=".ExplorerActivity"
 			android:label="Explorer" />
+		<activity
+			android:name=".TerminalActivity"
+			android:label="Run Command" />
 		<service
 			android:name=".SupervisorService"
 			android:enabled="true" />

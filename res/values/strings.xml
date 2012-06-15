@@ -10,7 +10,8 @@
 	<string name="prompt_location">bootstrap location</string>
 	<string name="menu_control">Control</string>
 	<string name="menu_clean">Clean Archives</string>
-	<!-- search -->
+	<string name="menu_run">Run Command</string>
+		<!-- search -->
 	<string name="search_label">BotBrew</string>
 	<string name="search_hint">Search for packages</string>
 	<string name="search_settings_description">BotBrew packages</string>

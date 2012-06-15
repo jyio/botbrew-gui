@@ -30,4 +30,10 @@
 		android:icon="@android:drawable/ic_menu_delete"
 		android:orderInCategory="4"
 		android:showAsAction="never" />
+	<item
+		android:id="@+id/menu_run"
+		android:title="@string/menu_run"
+		android:icon="@android:drawable/ic_menu_agenda"
+		android:orderInCategory="5"
+		android:showAsAction="never" />
 </menu>
