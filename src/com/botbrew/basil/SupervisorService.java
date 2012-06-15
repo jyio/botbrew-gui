@@ -2,7 +2,6 @@ package com.botbrew.basil;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 
 import android.app.Notification;

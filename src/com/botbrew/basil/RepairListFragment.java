@@ -72,7 +72,6 @@ class RepairListLoader extends AsyncTaskLoader<ArrayList<String>> {
 public class RepairListFragment extends SherlockListFragment implements LoaderManager.LoaderCallbacks<ArrayList<String>>, TitleFragment {
 	private static final int LOADER_ID = 0x03;
 	private ArrayAdapter<String> adapter;
-	private BotBrewApp mApplication;
 	@Override
 	public String getTitle() {
 		return "Repairable";
@@ -80,7 +79,6 @@ public class RepairListFragment extends SherlockListFragment implements LoaderMa
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		mApplication = (BotBrewApp)getActivity().getApplicationContext();
 		//setEmptyText("No packages");
 		adapter = new ArrayAdapter<String>(getActivity(),android.R.layout.simple_list_item_1);
 		registerForContextMenu(getListView());

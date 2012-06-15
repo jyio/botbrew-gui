@@ -3,14 +3,12 @@ package com.botbrew.basil;
 import android.app.SearchManager;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
-import android.text.TextUtils;
 
 public class PackageCacheProvider extends ContentProvider {
 	private DatabaseOpenHelper mDB;
@@ -116,7 +114,6 @@ public class PackageCacheProvider extends ContentProvider {
 	public int bulkInsert(Uri uri, ContentValues[] values) {
 		final SQLiteDatabase db = mDB.getWritableDatabase();
 		final int match = sUriMatcher.match(uri);
-		boolean success = false;
 		if(match > 0) switch(sContentUriValues[match]) {
 			case UPDATE_RELOAD:
 				db.beginTransaction();
@@ -150,7 +147,6 @@ public class PackageCacheProvider extends ContentProvider {
 						stmt2.execute();
 					}
 					db.setTransactionSuccessful();
-					success = true;
 				} finally {
 					db.endTransaction();
 					getContext().getContentResolver().notifyChange(ContentUri.CACHE_BASE.uri,null);
@@ -178,7 +174,6 @@ public class PackageCacheProvider extends ContentProvider {
 						stmt.execute();
 					}
 					db.setTransactionSuccessful();
-					success = true;
 				} finally {
 					db.endTransaction();
 					getContext().getContentResolver().notifyChange(ContentUri.CACHE_BASE.uri,null);

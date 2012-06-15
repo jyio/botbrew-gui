@@ -66,7 +66,6 @@ public class DebianPackageManager {
 		","+Build.DEVICE.toLowerCase()+		// TODO: remove after dpkg transition
 		","+Build.CPU_ABI.toLowerCase()+	// TODO: remove after dpkg transition
 		","+Build.CPU_ABI2.toLowerCase();	// TODO: remove after dpkg transition
-	private static Runtime runtime = Runtime.getRuntime();
 	protected final EnumMap<Config,String> mConfig = new EnumMap<Config,String>(Config.class);
 	public final String root;
 	public boolean redirect = false;

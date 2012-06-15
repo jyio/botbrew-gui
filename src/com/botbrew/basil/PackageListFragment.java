@@ -74,11 +74,9 @@ public abstract class PackageListFragment extends SherlockListFragment implement
 	private static final int LOADER_ID = 0x01;
 	private final AlphabetIndexer indexer = new AlphabetIndexer(null,0,"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	private SimpleCursorAdapter adapter;
-	private BotBrewApp mApplication;
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		mApplication = (BotBrewApp)getActivity().getApplicationContext();
 		setEmptyText("No packages");
 		setListShown(false);
 		getLoaderManager().initLoader(LOADER_ID,null,this);
