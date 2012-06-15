@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
+import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
@@ -35,6 +36,11 @@ import android.view.inputmethod.InputMethodManager;
 public class BotBrewApp extends Application {
 	public static final String TAG = "BotBrew";
 	public static final String default_root = "/data/botbrew-basil";
+	@Override
+	public void onCreate() {
+		ACRA.init(this);
+		super.onCreate();
+	}
 	public String root() {
 		return PreferenceManager.getDefaultSharedPreferences(this).getString("var_root",default_root);
 	}
