@@ -67,7 +67,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			(new AsyncTask<Void,Integer,Boolean>() {
 				@Override
 				protected Boolean doInBackground(final Void... params) {
-					getDialog().setCancelable(false);
+					setCancelable(false);
 					try {
 						final File dst = new File(activity.getCacheDir(),name);
 						publishProgress(0);
@@ -89,7 +89,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				protected void onCancelled(Boolean result) {
 					view.findViewById(R.id.fail).setVisibility(View.VISIBLE);
 					view.findViewById(R.id.retry).setVisibility(View.VISIBLE);
-					getDialog().setCancelable(true);
+					setCancelable(true);
 				}
 				@Override
 				protected void onPostExecute(Boolean result) {
@@ -174,7 +174,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				(new AsyncTask<Void,Void,Integer>() {
 					@Override
 					protected Integer doInBackground(final Void... ign) {
-						getDialog().setCancelable(false);
+						setCancelable(false);
 						try {
 							int res = sh.waitFor();
 							archive.delete();
@@ -188,7 +188,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					protected void onCancelled(Integer result) {
 						view.findViewById(R.id.fail).setVisibility(View.VISIBLE);
 						view.findViewById(R.id.retry).setVisibility(View.VISIBLE);
-						getDialog().setCancelable(true);
+						setCancelable(true);
 					}
 					@Override
 					protected void onPostExecute(Integer result) {
