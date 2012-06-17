@@ -42,12 +42,13 @@ import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 public class BootstrapActivity extends SherlockFragmentActivity {
-	public class DownloadDialogFragment extends SherlockDialogFragment {
+	public static class DownloadDialogFragment extends SherlockDialogFragment {
 		public DownloadDialogFragment() {
 		}
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			final View view = inflater.inflate(R.layout.bootstrap_activity_download_dialog_fragment,container);
+			final BootstrapActivity activity = (BootstrapActivity)getActivity();
 			final CharSequence path = getArguments().getCharSequence("path");
 			final boolean loop = getArguments().getBoolean("loop",false);
 			final CharSequence codename = getResources().getText(R.string.app_codename);
@@ -55,7 +56,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				@Override
 				public void onClick(View v) {
 					getDialog().dismiss();
-					showDownload(path,loop);
+					activity.showDownload(path,loop);
 				}
 			});
 			final String name = loop?"img.zip":"pkg.zip";
@@ -68,7 +69,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				protected Boolean doInBackground(final Void... params) {
 					getDialog().setCancelable(false);
 					try {
-						final File dst = new File(getCacheDir(),name);
+						final File dst = new File(activity.getCacheDir(),name);
 						publishProgress(0);
 						Log.v(BotBrewApp.TAG,"now downloading "+src+" to"+dst);
 						fetch(new URL(src),dst);
@@ -97,7 +98,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						return;
 					}
 					getDialog().dismiss();
-					showInstall(path,loop);
+					activity.showInstall(path,loop);
 				}
 				protected void fetch(final URL fremote, final File flocal) throws IOException {
 					try {
@@ -125,25 +126,27 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			return view;
 		}
 	}
-	public class InstallDialogFragment extends SherlockDialogFragment {
+	public static class InstallDialogFragment extends SherlockDialogFragment {
 		public InstallDialogFragment() {
 		}
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			final View view = inflater.inflate(R.layout.bootstrap_activity_install_dialog_fragment,container);
+			final BootstrapActivity activity = (BootstrapActivity)getActivity();
 			final String path = getArguments().getCharSequence("path").toString();
 			final boolean loop = getArguments().getBoolean("loop",false);
 			((Button)view.findViewById(R.id.retry)).setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					getDialog().dismiss();
-					showInstall(path,loop);
+					activity.showInstall(path,loop);
 				}
 			});
-			final File archive = new File(getCacheDir(),loop?"img.zip":"pkg.zip");
+			final File archive = new File(activity.getCacheDir(),loop?"img.zip":"pkg.zip");
 			final String cmd = archive.getAbsolutePath();
 			try {
-				((BotBrewApp)getApplicationContext()).unmount();
+				final BotBrewApp app = (BotBrewApp)activity.getApplicationContext();
+				app.unmount();
 				final Shell.Term sh = Shell.Term.getRootShell();
 				final OutputStream sh_stdin = sh.stdin();
 				final TermSession termsession = new TermSession();
@@ -161,7 +164,6 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				emulatorview.attachSession(termsession);
 				emulatorview.setDensity(getResources().getDisplayMetrics());
 				emulatorview.setTextSize(16);
-				final BotBrewApp app = (BotBrewApp)getApplicationContext();
 				emulatorview.setExtGestureListener(new GestureDetector.SimpleOnGestureListener() {
 					@Override
 					public boolean onSingleTapUp(MotionEvent e) {
@@ -176,7 +178,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						try {
 							int res = sh.waitFor();
 							archive.delete();
-							((BotBrewApp)getApplicationContext()).nativeInstall(new File(path));
+							app.nativeInstall(new File(path));
 							return res;
 						} catch(InterruptedException ex) {
 						}
@@ -213,12 +215,13 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			return view;
 		}
 	}
-	public class RebaseDialogFragment extends SherlockDialogFragment {
+	public static class RebaseDialogFragment extends SherlockDialogFragment {
 		public RebaseDialogFragment() {
 		}
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			final View view = inflater.inflate(R.layout.bootstrap_activity_rebase_dialog_fragment,container);
+			final BootstrapActivity activity = (BootstrapActivity)getActivity();
 			final String path = getArguments().getCharSequence("path").toString();
 			final boolean loop = getArguments().getBoolean("loop",false);
 			((TextView)view.findViewById(R.id.location)).setText(path);
@@ -226,13 +229,13 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				@Override
 				public void onClick(View v) {
 					getDialog().dismiss();
-					showDownload(path,loop);
+					activity.showDownload(path,loop);
 				}
 			});
 			((Button)view.findViewById(R.id.setdefault)).setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					final BotBrewApp app = (BotBrewApp)getApplicationContext();
+					final BotBrewApp app = (BotBrewApp)activity.getApplicationContext();
 					app.unmount();
 					app.nativeInstall(new File(path));
 					final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -331,17 +334,17 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 		b.putBoolean("loop",loop);
 		return b;
 	}
-	protected void showDownload(final CharSequence path, final boolean loop) {
+	public void showDownload(final CharSequence path, final boolean loop) {
 		final DialogFragment frag = new DownloadDialogFragment();
 		frag.setArguments(bundleArguments(path,loop));
 		frag.show(getSupportFragmentManager(),null);
 	}
-	protected void showInstall(final CharSequence path, final boolean loop) {
+	public void showInstall(final CharSequence path, final boolean loop) {
 		final DialogFragment frag = new InstallDialogFragment();
 		frag.setArguments(bundleArguments(path,loop));
 		frag.show(getSupportFragmentManager(),null);
 	}
-	protected void showRebase(final CharSequence path, final boolean loop) {
+	public void showRebase(final CharSequence path, final boolean loop) {
 		final DialogFragment frag = new RebaseDialogFragment();
 		frag.setArguments(bundleArguments(path,loop));
 		frag.show(getSupportFragmentManager(),null);
