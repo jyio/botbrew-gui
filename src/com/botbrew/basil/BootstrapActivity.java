@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -49,13 +50,14 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			final View view = inflater.inflate(R.layout.bootstrap_activity_download_dialog_fragment,container);
 			final BootstrapActivity activity = (BootstrapActivity)getActivity();
+			final Dialog dialog = getDialog();
 			final CharSequence path = getArguments().getCharSequence("path");
 			final boolean loop = getArguments().getBoolean("loop",false);
 			final CharSequence codename = getResources().getText(R.string.app_codename);
 			((Button)view.findViewById(R.id.retry)).setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					getDialog().dismiss();
+					dialog.dismiss();
 					activity.showDownload(path,loop);
 				}
 			});
@@ -97,7 +99,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						onCancelled(result);
 						return;
 					}
-					getDialog().dismiss();
+					dialog.dismiss();
 					activity.showInstall(path,loop);
 				}
 				protected void fetch(final URL fremote, final File flocal) throws IOException {
@@ -122,7 +124,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					remote.close();
 				}
 			}).execute();
-			getDialog().setTitle("Downloading...");
+			dialog.setTitle("Downloading...");
 			return view;
 		}
 	}
@@ -133,12 +135,13 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			final View view = inflater.inflate(R.layout.bootstrap_activity_install_dialog_fragment,container);
 			final BootstrapActivity activity = (BootstrapActivity)getActivity();
+			final Dialog dialog = getDialog();
 			final String path = getArguments().getCharSequence("path").toString();
 			final boolean loop = getArguments().getBoolean("loop",false);
 			((Button)view.findViewById(R.id.retry)).setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					getDialog().dismiss();
+					dialog.dismiss();
 					activity.showInstall(path,loop);
 				}
 			});
@@ -201,7 +204,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						editor.putString("var_root",path);
 						editor.remove("var_dbChecksumCache");
 						editor.commit();
-						getDialog().dismiss();
+						dialog.dismiss();
 						startActivity(new Intent(getActivity(),Main.class));
 						getActivity().finish();
 					}
@@ -210,8 +213,8 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				view.findViewById(R.id.fail).setVisibility(View.VISIBLE);
 				view.findViewById(R.id.retry).setVisibility(View.VISIBLE);
 			}
-			getDialog().setTitle("Installing...");
-			getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+			dialog.setTitle("Installing...");
+			dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 			return view;
 		}
 	}
@@ -222,13 +225,14 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 			final View view = inflater.inflate(R.layout.bootstrap_activity_rebase_dialog_fragment,container);
 			final BootstrapActivity activity = (BootstrapActivity)getActivity();
+			final Dialog dialog = getDialog();
 			final String path = getArguments().getCharSequence("path").toString();
 			final boolean loop = getArguments().getBoolean("loop",false);
 			((TextView)view.findViewById(R.id.location)).setText(path);
 			((Button)view.findViewById(R.id.reinstall)).setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					getDialog().dismiss();
+					dialog.dismiss();
 					activity.showDownload(path,loop);
 				}
 			});
@@ -243,12 +247,12 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					editor.putString("var_root",path);
 					editor.remove("var_dbChecksumCache");
 					editor.commit();
-					getDialog().dismiss();
+					dialog.dismiss();
 					startActivity(IntentType.APP_RESTART.intent(getActivity(),Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 					getActivity().finish();
 				}
 			});
-			getDialog().setTitle("Whoa there...");
+			dialog.setTitle("Whoa there...");
 			return view;
 		}
 	}
