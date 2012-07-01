@@ -7,6 +7,11 @@
 			android:summaryOn="display the homepage when the app is launched"
 			android:summaryOff="do not display the homepage when the app is launched"
 			android:defaultValue="false" />
+		<EditTextPreference
+			android:key="interface_run_favorite"
+			android:title="favorite commands"
+			android:summary="usable from the `run command' interface"
+			android:defaultValue="apt-cache stats\n# dpkg --configure --pending" />
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Boot Process">
 		<CheckBoxPreference

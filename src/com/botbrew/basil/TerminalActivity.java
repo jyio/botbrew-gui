@@ -1,6 +1,11 @@
 package com.botbrew.basil;
 
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -13,11 +18,19 @@ class ArrayListFragment extends SherlockListFragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+		final Activity activity = getActivity();
+		PreferenceManager.setDefaultValues(activity,R.xml.preference,false);
+		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+		final ArrayList<String> cmdlist = new ArrayList<String>();
+		for(String cmd: pref.getString("interface_run_favorite","").split("\\r?\\n")) {
+			cmd = cmd.trim();
+			if(cmd.length() > 0) cmdlist.add(cmd);
+		}
 		setEmptyText("No stored commands");
 		setListAdapter(new ArrayAdapter<String>(
 			getActivity(),
 			android.R.layout.simple_list_item_1,
-			new String[] {"# dpkg --configure --pending"}
+			cmdlist
 		));
 	}
 	@Override
