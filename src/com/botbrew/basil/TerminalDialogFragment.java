@@ -42,7 +42,8 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 			final Shell.Term sh = superuser?Shell.Term.getRootShell():Shell.Term.getUserShell();
 			final OutputStream sh_stdin = sh.stdin();
 			final InputStream sh_stdout = sh.stdout();
-			sh.botbrew(init.getCanonicalPath(),app.root(),command);
+			if(superuser) sh.botbrew(init.getCanonicalPath(),app.root(),command);
+			else sh.botbrew(app.root(),command);
 			sh_stdin.close();
 			while(sh_stdout.read() != '\n');
 			final TermSession termsession = new TermSession();
