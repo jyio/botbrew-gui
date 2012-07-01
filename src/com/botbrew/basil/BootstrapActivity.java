@@ -43,6 +43,29 @@ import com.actionbarsherlock.app.SherlockDialogFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 public class BootstrapActivity extends SherlockFragmentActivity {
+	public static class DialogState {
+		public static enum DialogType {
+			DIALOG_NONE,
+			DIALOG_DOWNLOAD,
+			DIALOG_INSTALL,
+			DIALOG_REBASE
+		}
+		public final DialogType dialog;
+		public final CharSequence path;
+		public final boolean loop;
+		public static final DialogState NONE = new DialogState(DialogType.DIALOG_NONE);
+		public DialogState() {
+			this(DialogType.DIALOG_NONE,BotBrewApp.default_root,false);
+		}
+		public DialogState(final DialogType dialog) {
+			this(dialog,BotBrewApp.default_root,false);
+		}
+		public DialogState(final DialogType dialog, final CharSequence path, final boolean loop) {
+			this.dialog = dialog;
+			this.path = path;
+			this.loop = loop;
+		}
+	}
 	public static class DownloadDialogFragment extends SherlockDialogFragment {
 		public DownloadDialogFragment() {
 		}
@@ -205,8 +228,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						editor.remove("var_dbChecksumCache");
 						editor.commit();
 						dialog.dismiss();
-						startActivity(new Intent(getActivity(),Main.class));
-						getActivity().finish();
+						activity.showDone();
 					}
 				}).execute();
 			} catch(IOException ex) {
@@ -248,8 +270,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					editor.remove("var_dbChecksumCache");
 					editor.commit();
 					dialog.dismiss();
-					startActivity(IntentType.APP_RESTART.intent(getActivity(),Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-					getActivity().finish();
+					activity.showDone();
 				}
 			});
 			dialog.setTitle("Whoa there...");
@@ -258,6 +279,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 	}
 	private static final String STR_CUSTOM = "custom";
 	private static final int REQ_BOOTSTRAP = 1;
+	private BotBrewApp mApplication;
 	private Spinner vLocation;
 	private final ArrayList<String> mLocations = new ArrayList<String>();
 	private String mLocation = null;
@@ -313,6 +335,24 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				}
 			}
 		});
+		mApplication = (BotBrewApp)getApplicationContext();
+	}
+	@Override
+	public void onResume() {
+		super.onResume();
+		DialogState dialogstate = mApplication.mBootstrapDialogState;
+		switch(dialogstate.dialog) {
+			case DIALOG_DOWNLOAD:
+				showDownload(dialogstate.path,dialogstate.loop);
+				break;
+			case DIALOG_INSTALL:
+				showInstall(dialogstate.path,dialogstate.loop);
+				break;
+			case DIALOG_REBASE:
+				showRebase(dialogstate.path,dialogstate.loop);
+				break;
+		}
+		mApplication.mBootstrapDialogState = DialogState.NONE;
 	}
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -341,17 +381,37 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 	public void showDownload(final CharSequence path, final boolean loop) {
 		final DialogFragment frag = new DownloadDialogFragment();
 		frag.setArguments(bundleArguments(path,loop));
-		frag.show(getSupportFragmentManager(),null);
+		mApplication.mBootstrapDialogState = DialogState.NONE;
+		try {
+			frag.show(getSupportFragmentManager(),null);
+		} catch(IllegalStateException ex) {
+			mApplication.mBootstrapDialogState = new DialogState(DialogState.DialogType.DIALOG_DOWNLOAD,path,loop);
+		}
 	}
 	public void showInstall(final CharSequence path, final boolean loop) {
 		final DialogFragment frag = new InstallDialogFragment();
 		frag.setArguments(bundleArguments(path,loop));
-		frag.show(getSupportFragmentManager(),null);
+		mApplication.mBootstrapDialogState = DialogState.NONE;
+		try {
+			frag.show(getSupportFragmentManager(),null);
+		} catch(IllegalStateException ex) {
+			mApplication.mBootstrapDialogState = new DialogState(DialogState.DialogType.DIALOG_INSTALL,path,loop);
+		}
 	}
 	public void showRebase(final CharSequence path, final boolean loop) {
 		final DialogFragment frag = new RebaseDialogFragment();
 		frag.setArguments(bundleArguments(path,loop));
-		frag.show(getSupportFragmentManager(),null);
+		mApplication.mBootstrapDialogState = DialogState.NONE;
+		try {
+			frag.show(getSupportFragmentManager(),null);
+		} catch(IllegalStateException ex) {
+			mApplication.mBootstrapDialogState = new DialogState(DialogState.DialogType.DIALOG_REBASE,path,loop);
+		}
+	}
+	public void showDone() {
+		mApplication.mBootstrapDialogState = DialogState.NONE;
+		startActivity(IntentType.APP_RESTART.intent(this,Main.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		finish();
 	}
 	public static List<String> mkdir_p(final File path) {
 		if(path.exists()) return new ArrayList<String>();

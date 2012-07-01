@@ -37,6 +37,7 @@ import android.view.inputmethod.InputMethodManager;
 public class BotBrewApp extends Application {
 	public static final String TAG = "BotBrew";
 	public static final String default_root = "/data/botbrew-basil";
+	public BootstrapActivity.DialogState mBootstrapDialogState = BootstrapActivity.DialogState.NONE;
 	@Override
 	public void onCreate() {
 		ACRA.init(this);
