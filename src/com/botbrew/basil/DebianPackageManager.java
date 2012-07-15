@@ -14,8 +14,10 @@ import java.util.regex.Pattern;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class DebianPackageManager {
@@ -115,6 +117,16 @@ public class DebianPackageManager {
 		}
 		return sb.toString();
 	}
+	protected String mkAptConfStr() {
+		final StringBuilder sb = new StringBuilder();
+		for(EnumMap.Entry<Config,String> entry: mConfig.entrySet()) {
+			sb.append(entry.getKey().name);
+			sb.append(" '");
+			sb.append(entry.getValue());
+			sb.append("';\n");
+		}
+		return sb.toString();
+	}
 	protected String cat(final CharSequence... ss) {
 		final StringBuffer sb = new StringBuffer();
 		for(CharSequence s: ss) {
@@ -180,25 +192,59 @@ public class DebianPackageManager {
 	public String dpkg_install(final CharSequence... pkg) {
 		return "dpkg --install "+qcat(pkg);
 	}
-	public boolean pm_update(final File tmpdir) {
+	public boolean pm_writeconf(final File tmpdir) {
+		boolean success = true;
 		try {
+			File temp;
+			FileWriter tempwriter;
+			String dstfile;
+			Process p;
 			// set architectures
-			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_update(): using architectures "+arch);
-			File temp = new File(tmpdir,"arch.conf");
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_writeconf(): using architectures "+arch);
+			temp = new File(tmpdir,"arch.conf");
 			temp.delete();
-			FileWriter tempwriter = new FileWriter(temp);
+			tempwriter = new FileWriter(temp);
 			tempwriter.write(arch.replace(',','\n'));
 			tempwriter.write('\n');
 			tempwriter.close();
-			final String archconf = "/var/lib/dpkg/arch";
-			Process p = exec(true,"sh -c \"cp '"+temp+"' '"+archconf+"' && chmod 0644 '"+archconf+"' && chown 0:0 '"+archconf+"'\"");
+			dstfile = "/var/lib/dpkg/arch";
+			p = exec(true,"sh -c \"cp '"+temp+"' '"+dstfile+"' && chmod 0644 '"+dstfile+"' && chown 0:0 '"+dstfile+"'\"");
 			p.getOutputStream().close();
 			BotBrewApp.sinkOutput(p);
 			BotBrewApp.sinkError(p);
 			temp.delete();
-			if(p.waitFor() != 0) return false;
-			// update
-			p = exec(true,aptget_update());
+			if(p.waitFor() != 0) success = false;
+			// set apt configuration
+			temp = new File(tmpdir,"apt.conf");
+			temp.delete();
+			tempwriter = new FileWriter(temp);
+			tempwriter.write(mkAptConfStr());
+			tempwriter.close();
+			dstfile = "/etc/apt/apt.conf.d/99botbrew";
+			p = exec(true,"sh -c \"cp '"+temp+"' '"+dstfile+"' && chmod 0644 '"+dstfile+"' && chown 0:0 '"+dstfile+"'\"");
+			p.getOutputStream().close();
+			BotBrewApp.sinkOutput(p);
+			BotBrewApp.sinkError(p);
+			temp.delete();
+			if(p.waitFor() != 0) success = false;
+		} catch(IOException e) {
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_writeconf(): IOException: cannot write configuration");
+			return false;
+		} catch(InterruptedException ex) {
+			Log.v(BotBrewApp.TAG,"DebianPackageManager.pm_writeconf(): InterruptedException: cannot write configuration");
+			return false;
+		}
+		return success;
+	}
+	public static void pm_writeconf(final Context ctx) {
+		final BotBrewApp app = (BotBrewApp)ctx.getApplicationContext();
+		final DebianPackageManager dpm = new DebianPackageManager(app.root());
+		dpm.config(PreferenceManager.getDefaultSharedPreferences(app));
+		dpm.pm_writeconf(app.getCacheDir());
+	}
+	public boolean pm_update() {
+		try {
+			Process p = exec(true,aptget_update());
 			p.getOutputStream().close();
 			BotBrewApp.sinkOutput(p);
 			BotBrewApp.sinkError(p);

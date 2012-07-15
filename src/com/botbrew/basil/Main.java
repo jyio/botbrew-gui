@@ -203,7 +203,7 @@ public class Main extends SherlockFragmentActivity {
 			protected Boolean doInBackground(final Void... ign) {
 				mLocked = true;
 				Log.v(BotBrewApp.TAG,"-> Main.onUpdateRequested("+update+")");
-				if(update) dpm.pm_update(getCacheDir());
+				if(update) dpm.pm_update();
 				final boolean result = dpm.pm_refresh(getContentResolver(),update);
 				Log.v(BotBrewApp.TAG,"<- Main.onUpdateRequested("+update+")");
 				return result;

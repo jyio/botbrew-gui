@@ -227,6 +227,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						editor.putString("var_root",path);
 						editor.remove("var_dbChecksumCache");
 						editor.commit();
+						DebianPackageManager.pm_writeconf(activity);
 						dialog.dismiss();
 						activity.showDone();
 					}
@@ -269,6 +270,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					editor.putString("var_root",path);
 					editor.remove("var_dbChecksumCache");
 					editor.commit();
+					DebianPackageManager.pm_writeconf(activity);
 					dialog.dismiss();
 					activity.showDone();
 				}
