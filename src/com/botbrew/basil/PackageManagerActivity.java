@@ -108,7 +108,6 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final String root = (new File(pref.getString("var_root",BotBrewApp.default_root))).getAbsolutePath();
 		final DebianPackageManager dpm = new DebianPackageManager(root);
-		dpm.config(pref);
 		(new AsyncTask<Void,CharSequence,Integer>() {
 			@Override
 			protected void onPreExecute() {
@@ -219,8 +218,6 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final String root = (new File(pref.getString("var_root",BotBrewApp.default_root))).getAbsolutePath();
 		final DebianPackageManager dpm = new DebianPackageManager(root);
-		dpm.config(pref);
-		DebianPackageManager dpm2;
 		Shell sh = null;
 		try {
 			// TODO: multiple package names in title
@@ -232,10 +229,9 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 					break;
 				case APTGET_REINSTALL:
 					mActionBar.setTitle("Reinstall "+pkg[0]);
-					dpm2 = new DebianPackageManager(dpm);
-					dpm2.config(DebianPackageManager.Config.APT_Get_ReInstall,"1");
+					dpm.config(DebianPackageManager.Config.APT_Get_ReInstall,"1");
 					sh = Shell.Term.getRootShell();
-					sh.botbrew(root,dpm2.aptget_install(pkg));
+					sh.botbrew(root,dpm.aptget_install(pkg));
 					break;
 				case APTGET_UPGRADE:
 					mActionBar.setTitle("Upgrade "+pkg[0]);
@@ -312,7 +308,6 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final String root = (new File(pref.getString("var_root",BotBrewApp.default_root))).getAbsolutePath();
 		final DebianPackageManager dpm = new DebianPackageManager(root);
-		dpm.config(pref);
 		mLocked = true;
 		final TermSession term0 = new TermSession();
 		final TermSession term1 = new TermSession();

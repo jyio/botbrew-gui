@@ -197,7 +197,6 @@ public class Main extends SherlockFragmentActivity {
 		PreferenceManager.setDefaultValues(this,R.xml.preference,false);
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		final DebianPackageManager dpm = new DebianPackageManager(mApplication.root());
-		dpm.config(pref);
 		(new AsyncTask<Void,Void,Boolean>() {
 			@Override
 			protected void onPreExecute() {
