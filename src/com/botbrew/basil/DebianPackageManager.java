@@ -121,9 +121,9 @@ public class DebianPackageManager {
 		final StringBuilder sb = new StringBuilder();
 		for(EnumMap.Entry<Config,String> entry: mConfig.entrySet()) {
 			sb.append(entry.getKey().name);
-			sb.append(" '");
+			sb.append(" \"");
 			sb.append(entry.getValue());
-			sb.append("';\n");
+			sb.append("\";\n");
 		}
 		return sb.toString();
 	}
