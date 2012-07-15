@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:text="Before I send you on your way, I could do some basic setup to get you started. What would you like to do with BotBrew?" />
+	<ListView
+		android:id="@+id/scriptlist"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1" />
+	<Button
+		android:id="@+id/ok"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="Done" />
+</LinearLayout>

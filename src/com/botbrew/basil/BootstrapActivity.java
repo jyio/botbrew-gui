@@ -5,19 +5,25 @@ import jackpal.androidterm.emulatorview.EmulatorView;
 import jackpal.androidterm.emulatorview.TermSession;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -34,6 +40,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -48,7 +55,8 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			DIALOG_NONE,
 			DIALOG_DOWNLOAD,
 			DIALOG_INSTALL,
-			DIALOG_REBASE
+			DIALOG_REBASE,
+			DIALOG_SETUP
 		}
 		public final DialogType dialog;
 		public final CharSequence path;
@@ -235,7 +243,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						editor.commit();
 						DebianPackageManager.pm_writeconf(activity);
 						dialog.dismiss();
-						activity.showDone();
+						activity.showSetup();
 					}
 				}).execute();
 			} catch(IOException ex) {
@@ -278,11 +286,99 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					editor.commit();
 					DebianPackageManager.pm_writeconf(activity);
 					dialog.dismiss();
-					activity.showDone();
+					activity.showSetup();
 				}
 			});
 			dialog.setTitle("Whoa there...");
 			return view;
+		}
+	}
+	public static class SetupDialogFragment extends SherlockDialogFragment {
+		static enum SetupScriptType {
+			SETUP_BOTBREW_WRAPPER("use BotBrew on the command line",R.raw.setup_botbrew_wrapper),
+			SETUP_DEBIAN_REPOSITORY(null,R.raw.setup_debian_repository),
+			SETUP_DEBIAN_APT("use the dpkg/APT system",R.raw.setup_debian_apt,SETUP_DEBIAN_REPOSITORY),
+			SETUP_DEBIAN_PYTHON("run Python programs",R.raw.setup_debian_python,SETUP_DEBIAN_APT),
+			SETUP_DEBIAN_MINIMAL("install a minimal Debian",R.raw.setup_debian_minimal,SETUP_DEBIAN_APT);
+			public final String name;
+			public final int resource;
+			public final LinkedHashSet<SetupScriptType> dependencies = new LinkedHashSet<SetupScriptType>();
+			SetupScriptType(final String name, final int resource, final SetupScriptType... dependencies) {
+				this.name = name;
+				this.resource = resource;
+				for(SetupScriptType d: dependencies) this.dependencies.add(d);
+			}
+			public LinkedHashSet<SetupScriptType> resolve() {
+				final LinkedHashSet<SetupScriptType> res = new LinkedHashSet<SetupScriptType>();
+				for(SetupScriptType d: dependencies) res.addAll(d.resolve());
+				res.add(this);
+				return res;
+			}
+		}
+		public SetupDialogFragment() {
+		}
+		@Override
+		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+			final View view = inflater.inflate(R.layout.bootstrap_activity_setup_dialog_fragment,container);
+			final BootstrapActivity activity = (BootstrapActivity)getActivity();
+			final Dialog dialog = getDialog();
+			((Button)view.findViewById(R.id.ok)).setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					dialog.dismiss();
+					activity.showDone();
+				}
+			});
+			final ArrayList<String> scriptlist = new ArrayList<String>();
+			final HashMap<String,SetupScriptType> scriptmap = new HashMap<String,SetupScriptType>();
+			for(SetupScriptType setupscript: SetupScriptType.values()) if(setupscript.name != null) {
+				scriptlist.add(setupscript.name);
+				scriptmap.put(setupscript.name,setupscript);
+			}
+			ListView listview = (ListView)view.findViewById(R.id.scriptlist);
+			listview.setAdapter(new ArrayAdapter<String>(activity,android.R.layout.simple_list_item_1,scriptlist));
+			listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				public void onItemClick(AdapterView<?> l, View v, int position, long id) {
+					BufferedReader reader;
+					String line;
+					final SetupScriptType item = scriptmap.get((String)l.getAdapter().getItem(position));
+					final StringBuilder sb = new StringBuilder("#!/bin/sh\n");
+					for(SetupScriptType setupscript: item.resolve()) {
+						reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(setupscript.resource)));
+						try {
+							while((line = reader.readLine()) != null) {
+								sb.append(line);
+								sb.append("\n");
+							}
+							reader.close();
+						} catch(IOException ex) {
+						}
+					}
+					final File temp = new File(getActivity().getCacheDir(),"setup.sh");
+					try {
+						temp.delete();
+						final FileWriter tempwriter = new FileWriter(temp);
+						tempwriter.write(sb.toString());
+						tempwriter.close();
+						temp.setExecutable(true);
+					} catch(IOException ex) {
+						return;
+					}
+					final Bundle b = new Bundle();
+					b.putBoolean("superuser",true);
+					b.putCharSequence("command",temp.getAbsolutePath());
+					final DialogFragment frag = new TerminalDialogFragment();
+					frag.setArguments(b);
+					frag.show(getActivity().getSupportFragmentManager(),null);
+				}
+			});
+			dialog.setTitle("Setup");
+			return view;
+		}
+		@Override
+		public void onCancel(DialogInterface dialog) {
+			super.onCancel(dialog);
+			((BootstrapActivity)getActivity()).showDone();
 		}
 	}
 	private static final String STR_CUSTOM = "custom";
@@ -359,6 +455,9 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			case DIALOG_REBASE:
 				showRebase(dialogstate.path,dialogstate.loop);
 				break;
+			case DIALOG_SETUP:
+				showSetup();
+				break;
 		}
 		mApplication.mBootstrapDialogState = DialogState.NONE;
 	}
@@ -414,6 +513,15 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			frag.show(getSupportFragmentManager(),null);
 		} catch(IllegalStateException ex) {
 			mApplication.mBootstrapDialogState = new DialogState(DialogState.DialogType.DIALOG_REBASE,path,loop);
+		}
+	}
+	public void showSetup() {
+		final DialogFragment frag = new SetupDialogFragment();
+		mApplication.mBootstrapDialogState = DialogState.NONE;
+		try {
+			frag.show(getSupportFragmentManager(),null);
+		} catch(IllegalStateException ex) {
+			mApplication.mBootstrapDialogState = new DialogState(DialogState.DialogType.DIALOG_SETUP);
 		}
 	}
 	public void showDone() {
