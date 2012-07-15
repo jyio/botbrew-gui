@@ -63,8 +63,11 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 			});
 			(new AsyncTask<Void,Void,Integer>() {
 				@Override
-				protected Integer doInBackground(final Void... ign) {
+				protected void onPreExecute() {
 					getDialog().setCancelable(false);
+				}
+				@Override
+				protected Integer doInBackground(final Void... ign) {
 					try {
 						return sh.waitFor();
 					} catch(InterruptedException ex) {

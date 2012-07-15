@@ -111,9 +111,12 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 		dpm.config(pref);
 		(new AsyncTask<Void,CharSequence,Integer>() {
 			@Override
+			protected void onPreExecute() {
+				mLocked = true;
+			}
+			@Override
 			protected Integer doInBackground(final Void... ign) {
 				try {
-					mLocked = true;
 					final Shell sh = Shell.Pipe.getUserShell().redirect();
 					sh.botbrew(root,dpm.aptcache_show(pkg));
 					sh.stdin().close();

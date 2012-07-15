@@ -200,8 +200,11 @@ public class Main extends SherlockFragmentActivity {
 		dpm.config(pref);
 		(new AsyncTask<Void,Void,Boolean>() {
 			@Override
-			protected Boolean doInBackground(final Void... ign) {
+			protected void onPreExecute() {
 				mLocked = true;
+			}
+			@Override
+			protected Boolean doInBackground(final Void... ign) {
 				Log.v(BotBrewApp.TAG,"-> Main.onUpdateRequested("+update+")");
 				if(update) dpm.pm_update();
 				final boolean result = dpm.pm_refresh(getContentResolver(),update);

@@ -91,8 +91,11 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			progressbar.setIndeterminate(false);
 			(new AsyncTask<Void,Integer,Boolean>() {
 				@Override
-				protected Boolean doInBackground(final Void... params) {
+				protected void onPreExecute() {
 					setCancelable(false);
+				}
+				@Override
+				protected Boolean doInBackground(final Void... params) {
 					try {
 						final File dst = new File(activity.getCacheDir(),name);
 						publishProgress(0);
@@ -199,8 +202,11 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				});
 				(new AsyncTask<Void,Void,Integer>() {
 					@Override
-					protected Integer doInBackground(final Void... ign) {
+					protected void onPreExecute() {
 						setCancelable(false);
+					}
+					@Override
+					protected Integer doInBackground(final Void... ign) {
 						try {
 							int res = sh.waitFor();
 							archive.delete();
