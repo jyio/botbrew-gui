@@ -193,6 +193,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				sh_stdin.write(("set -e\n").getBytes());
 				sh_stdin.write(("chmod 0755 '"+cmd+"'\n").getBytes());
 				for(String mkdir: mkdir_p(new File(path))) sh_stdin.write(("mkdir '"+mkdir+"'\n").getBytes());
+				sh_stdin.write(("chmod 0755 '"+path+"'\n").getBytes());
 				sh_stdin.write(("cd '"+path+"'\n").getBytes());
 				sh_stdin.write(("'"+cmd+"' -n\n").getBytes());
 				sh_stdin.write(("exit\n").getBytes());
