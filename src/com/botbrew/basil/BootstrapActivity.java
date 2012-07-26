@@ -361,8 +361,22 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 						final FileWriter tempwriter = new FileWriter(temp);
 						tempwriter.write(sb.toString());
 						tempwriter.close();
-						temp.setExecutable(true);
+						try {
+							temp.setExecutable(true);
+						} catch(NoSuchMethodError ex) {
+							// Android 2.2 does not support File.setExecutable
+							final Shell.Pipe sh = Shell.Pipe.getRootShell();
+							sh.exec("chmod 0755 "+temp.getAbsolutePath());
+							sh.stdin().close();
+							BotBrewApp.sinkOutput(sh);
+							sh.stdout().close();
+							BotBrewApp.sinkError(sh);
+							sh.stderr().close();
+							if(sh.waitFor() != 0) return;
+						}
 					} catch(IOException ex) {
+						return;
+					} catch(InterruptedException ex) {
 						return;
 					}
 					final Bundle b = new Bundle();
