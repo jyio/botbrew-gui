@@ -239,6 +239,7 @@ public class DebianPackageManager {
 	public static void pm_writeconf(final Context ctx) {
 		final BotBrewApp app = (BotBrewApp)ctx.getApplicationContext();
 		final DebianPackageManager dpm = new DebianPackageManager(app.root());
+		PreferenceManager.setDefaultValues(ctx,R.xml.preference,false);
 		dpm.config(PreferenceManager.getDefaultSharedPreferences(app));
 		dpm.pm_writeconf(app.getCacheDir());
 	}
