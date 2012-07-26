@@ -41,6 +41,7 @@ static struct mountspec foreign_mounts[] = {
 	{NULL,"/sys","sysfs",0,NULL,0},
 	{NULL,"/run","tmpfs",0,"size=10%,mode=0755",0},
 	{"/mnt","/mnt",NULL,MS_BIND|MS_REC,NULL,0},
+	{"/storage","/storage",NULL,MS_BIND|MS_REC,NULL,0},
 	{NULL,"/android","tmpfs",MS_NODEV|MS_NOEXEC|MS_NOATIME,"size=1M,mode=0755",0},
 	{"/cache","/android/cache",NULL,MS_BIND|MS_REC,NULL,0},
 	{"/data","/android/data",NULL,MS_BIND|MS_REC,NULL,0},
@@ -567,7 +568,8 @@ int main(int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 		// prepare dynamic mounts
-		dynamic_remount("/mnt","/data/.botbrew");
+		if((stat("/mnt",&st) == 0)&&(S_ISDIR(st.st_mode))) dynamic_remount("/mnt","/data/.botbrew");
+		if((stat("/storage",&st) == 0)&&(S_ISDIR(st.st_mode))) dynamic_remount("/storage","/data/.botbrew");
 		if(loopmount) {
 			// perform loopback mount
 			if(loopdev_mount(loopmount,child_root,"ext4",0,NULL)) {
