@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import android.app.Dialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.GestureDetector;
@@ -28,10 +29,11 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final View view = inflater.inflate(R.layout.terminal_dialog_fragment,container);
 		final BotBrewApp app = (BotBrewApp)getActivity().getApplicationContext();
+		final Dialog dialog = getDialog();
 		((Button)view.findViewById(R.id.close)).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				getDialog().dismiss();
+				dialog.dismiss();
 			}
 		});
 		final boolean superuser = getArguments().getBoolean("superuser",false);
@@ -64,7 +66,7 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 			(new AsyncTask<Void,Void,Integer>() {
 				@Override
 				protected void onPreExecute() {
-					getDialog().setCancelable(false);
+					dialog.setCancelable(false);
 				}
 				@Override
 				protected Integer doInBackground(final Void... ign) {
@@ -77,7 +79,7 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 				@Override
 				protected void onCancelled(Integer result) {
 					view.findViewById(R.id.close).setVisibility(View.VISIBLE);
-					getDialog().setCancelable(true);
+					dialog.setCancelable(true);
 				}
 				@Override
 				protected void onPostExecute(Integer result) {
@@ -86,14 +88,14 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 						return;
 					}
 					view.findViewById(R.id.close).setVisibility(View.VISIBLE);
-					getDialog().setCancelable(true);
+					dialog.setCancelable(true);
 				}
 			}).execute();
 		} catch(IOException ex) {
 			view.findViewById(R.id.close).setVisibility(View.VISIBLE);
 		}
-		getDialog().setTitle("Terminal: "+command);
-		getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+		dialog.setTitle("Terminal: "+command);
+		dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 		return view;
 	}
 }
