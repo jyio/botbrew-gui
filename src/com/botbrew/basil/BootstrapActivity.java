@@ -172,6 +172,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			final Dialog dialog = getDialog();
 			final String path = getArguments().getCharSequence("path").toString();
 			final boolean loop = getArguments().getBoolean("loop",false);
+			final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
 			((Button)view.findViewById(R.id.retry)).setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -237,8 +238,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 							onCancelled(result);
 							return;
 						}
-						SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-						SharedPreferences.Editor editor = pref.edit();
+						final SharedPreferences.Editor editor = pref.edit();
 						editor.putString("var_root",path);
 						editor.remove("var_dbChecksumCache");
 						editor.commit();
@@ -266,6 +266,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 			final Dialog dialog = getDialog();
 			final String path = getArguments().getCharSequence("path").toString();
 			final boolean loop = getArguments().getBoolean("loop",false);
+			final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
 			((TextView)view.findViewById(R.id.location)).setText(path);
 			((Button)view.findViewById(R.id.reinstall)).setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -280,7 +281,6 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 					final BotBrewApp app = (BotBrewApp)activity.getApplicationContext();
 					app.unmount();
 					app.nativeInstall(new File(path));
-					final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 					final SharedPreferences.Editor editor = pref.edit();
 					editor.putString("var_root",path);
 					editor.remove("var_dbChecksumCache");
