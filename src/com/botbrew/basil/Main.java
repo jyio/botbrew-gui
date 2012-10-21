@@ -29,9 +29,8 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.viewpagerindicator.TitlePageIndicator;
-import com.viewpagerindicator.TitleProvider;
 
-class PagerAdapter extends FragmentPagerAdapter implements TitleProvider {
+class PagerAdapter extends FragmentPagerAdapter {
 	private final List<Fragment> fragmentlist;
 	PagerAdapter(FragmentManager fm, List<Fragment> fragmentlist) {
 		super(fm);
@@ -46,7 +45,7 @@ class PagerAdapter extends FragmentPagerAdapter implements TitleProvider {
 		return fragmentlist.size();
 	}
 	@Override
-	public String getTitle(int position) {
+	public String getPageTitle(int position) {
 		return ((TitleFragment)fragmentlist.get(position)).getTitle();
 	}
 }
