@@ -260,7 +260,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 			while(sh_stdout.read() != '\n');
 			while(sh_stdout.read() != '\n');
 			final TermSession term = new TermSession();
-			term.setColorScheme(new ColorScheme(7,0xffffffff,0,0xff000000));
+			term.setColorScheme(new ColorScheme(0xffffffff,0xff000000));
 			term.setTermOut(sh.stdin());
 			term.setTermIn(sh.stdout());
 			setViewFrame(term);
@@ -322,7 +322,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 					InputStream sh_stdout = sh.stdout();
 					while(sh_stdout.read() != '\n');
 					while(sh_stdout.read() != '\n');
-					term0.setColorScheme(new ColorScheme(7,0xffffffff,0,0xff000000));
+					term0.setColorScheme(new ColorScheme(0xffffffff,0xff000000));
 					term0.setTermOut(sh.stdin());
 					term0.setTermIn(sh.stdout());
 					publishProgress(term0);
@@ -332,7 +332,7 @@ public class PackageManagerActivity extends SherlockFragmentActivity {
 					sh.botbrew(root,dpm.aptget_install());
 					sh_stdout = sh.stdout();
 					while(sh_stdout.read() != '\n');
-					term1.setColorScheme(new ColorScheme(7,0xffffffff,0,0xff000000));
+					term1.setColorScheme(new ColorScheme(0xffffffff,0xff000000));
 					term1.setTermOut(sh.stdin());
 					term1.setTermIn(sh.stdout());
 					publishProgress(term1);

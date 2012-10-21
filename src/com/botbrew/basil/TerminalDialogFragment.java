@@ -49,7 +49,7 @@ public class TerminalDialogFragment extends SherlockDialogFragment {
 			sh_stdin.close();
 			while(sh_stdout.read() != '\n');
 			final TermSession termsession = new TermSession();
-			termsession.setColorScheme(new ColorScheme(7,0xffffffff,0,0xff000000));
+			termsession.setColorScheme(new ColorScheme(0xffffffff,0xff000000));
 			termsession.setTermOut(sh_stdin);
 			termsession.setTermIn(sh_stdout);
 			final EmulatorView emulatorview = (EmulatorView)view.findViewById(R.id.emulator);

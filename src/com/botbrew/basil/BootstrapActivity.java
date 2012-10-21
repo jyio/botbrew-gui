@@ -188,7 +188,7 @@ public class BootstrapActivity extends SherlockFragmentActivity {
 				final Shell.Term sh = Shell.Term.getRootShell();
 				final OutputStream sh_stdin = sh.stdin();
 				final TermSession termsession = new TermSession();
-				termsession.setColorScheme(new ColorScheme(7,0xffffffff,0,0xff000000));
+				termsession.setColorScheme(new ColorScheme(0xffffffff,0xff000000));
 				termsession.setTermOut(sh_stdin);
 				termsession.setTermIn(sh.stdout());
 				sh_stdin.write(("set -e\n").getBytes());
